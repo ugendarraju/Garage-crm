@@ -1,0 +1,13 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Deny access to sensitive files
+    <FilesMatch "^\.(env|git)|composer\.(json|lock)|package(-lock)?\.json|artisan">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+
+    # Forward all traffic to the public directory
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
