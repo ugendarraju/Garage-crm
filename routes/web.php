@@ -252,6 +252,9 @@ Route::middleware('auth')->group(function () {
     // Super Admin CRM Settings
     Route::get('/admin/settings', [\App\Http\Controllers\SuperAdmin\SystemSettingsController::class, 'edit'])->name('admin.settings.index');
     Route::post('/admin/settings', [\App\Http\Controllers\SuperAdmin\SystemSettingsController::class, 'update'])->name('admin.settings.update');
+
+    // Interactive User Guide & Help Center
+    Route::get('/user-guide', [\App\Http\Controllers\UserGuideController::class, 'index'])->name('user-guide');
 });
 
 require __DIR__.'/auth.php';
