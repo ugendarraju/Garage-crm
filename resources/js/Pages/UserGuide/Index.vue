@@ -397,41 +397,50 @@ const printGuide = () => {
                 </div>
             </div>
 
-            <!-- Header Controls: Category Pills & Print Button -->
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-                <!-- Category Tabs -->
-                <div class="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 no-scrollbar">
+            <!-- Category Tabs (Full-width row, fully visible) -->
+            <div class="mb-4">
+                <div class="flex items-center sm:flex-wrap gap-2 overflow-x-auto pb-2 sm:pb-0 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                     <button
                         v-for="cat in categories"
                         :key="cat.id"
                         @click="selectedCategory = cat.id"
                         :class="[
                             selectedCategory === cat.id
-                                ? 'bg-primary-700 text-white shadow-sm'
-                                : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200',
-                            'px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all'
+                                ? 'bg-primary-700 text-white shadow-md ring-2 ring-primary-700/20'
+                                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 hover:border-gray-300',
+                            'px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all'
                         ]"
                     >
                         {{ cat.name }}
                     </button>
                 </div>
+            </div>
 
-                <!-- Print Button -->
+            <!-- Sub Toolbar with Results Count & Moved Print Button -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6 bg-gray-50/80 border border-gray-200/80 rounded-2xl p-3 sm:px-4 sm:py-2.5">
+                <div class="text-xs sm:text-sm font-semibold text-gray-600 flex items-center gap-2">
+                    <span v-if="searchQuery">
+                        Showing {{ filteredGuides.length }} guide{{ filteredGuides.length === 1 ? '' : 's' }} for <strong class="text-primary-700">"{{ searchQuery }}"</strong>
+                    </span>
+                    <span v-else>
+                        Showing <strong>{{ filteredGuides.length }}</strong> guides in 
+                        <strong class="text-primary-700">{{ categories.find(c => c.id === selectedCategory)?.name || 'All' }}</strong>
+                    </span>
+                    <button v-if="searchQuery" @click="searchQuery = ''" class="ml-2 text-xs text-primary-600 hover:underline font-bold">
+                        Clear
+                    </button>
+                </div>
+
+                <!-- Print / Save as PDF button moved down here -->
                 <button
                     @click="printGuide"
-                    class="self-end sm:self-auto inline-flex items-center gap-2 px-3.5 py-2 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 rounded-xl text-xs font-bold shadow-sm transition shrink-0 print:hidden"
+                    class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 rounded-xl text-xs sm:text-sm font-bold shadow-sm transition shrink-0 print:hidden"
                 >
                     <svg class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                     </svg>
-                    Print / Save as PDF
+                    <span>Print / Save as PDF</span>
                 </button>
-            </div>
-
-            <!-- Search Result Counter -->
-            <div v-if="searchQuery" class="mb-4 text-sm font-semibold text-gray-600 flex items-center justify-between">
-                <span>Showing {{ filteredGuides.length }} guide{{ filteredGuides.length === 1 ? '' : 's' }} for <strong class="text-primary-700">"{{ searchQuery }}"</strong></span>
-                <button @click="searchQuery = ''" class="text-xs text-primary-600 hover:underline">Clear Search</button>
             </div>
 
             <!-- Guides List -->
@@ -534,15 +543,26 @@ const printGuide = () => {
             </div>
 
             <!-- Footer Support Box -->
-            <div class="mt-12 bg-white rounded-2xl border border-gray-200 p-6 text-center shadow-sm">
-                <h3 class="text-base font-bold text-gray-900 mb-1">Need help with something else?</h3>
-                <p class="text-xs text-gray-500 max-w-md mx-auto mb-4">You can speak directly to your built-in AI Voice Assistant by clicking the lightning button in the bottom right corner.</p>
-                <Link
-                    :href="route('dashboard')"
-                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-700 hover:bg-primary-600 text-white text-xs font-bold rounded-xl shadow-sm transition"
-                >
-                    Back to Dashboard
-                </Link>
+            <div class="mt-12 bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 text-center shadow-sm">
+                <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-1">Need help with something else?</h3>
+                <p class="text-xs sm:text-sm text-gray-500 max-w-md mx-auto mb-5">You can speak directly to your built-in AI Voice Assistant by clicking the lightning button in the bottom right corner.</p>
+                <div class="flex flex-wrap items-center justify-center gap-3">
+                    <button
+                        @click="printGuide"
+                        class="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-xs sm:text-sm font-bold rounded-xl shadow-sm transition print:hidden"
+                    >
+                        <svg class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                        Print Full Guide (PDF)
+                    </button>
+                    <Link
+                        :href="route('dashboard')"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-700 hover:bg-primary-600 text-white text-xs sm:text-sm font-bold rounded-xl shadow-sm transition"
+                    >
+                        Back to Dashboard
+                    </Link>
+                </div>
             </div>
         </div>
     </AuthenticatedLayout>
