@@ -116,21 +116,17 @@ const formatLicensePlate = (plate) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Job Cards</h1>
-                    <p class="mt-2 text-sm text-gray-500 font-medium">Manage all your garage job cards and track service progress.</p>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Job Cards</h1>
+                    <p class="mt-1 sm:mt-2 text-xs sm:text-sm text-gray-500 font-medium">Manage all your garage job cards and track service progress.</p>
                 </div>
-                <div class="flex items-center gap-3" v-if="$page.props.auth.user.role !== 'customer'">
-                    <button class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
-                        <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                        Jobcard Presets
-                    </button>
-                    <Link :href="route('job-cards.create')" class="inline-flex items-center justify-center rounded-lg bg-primary-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-600 transition-colors">
-                        <svg class="-ml-1 mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <div class="flex items-center gap-2 sm:gap-3 self-start sm:self-auto" v-if="$page.props.auth.user.role !== 'customer'">
+                    <Link :href="route('job-cards.create')" class="inline-flex items-center justify-center rounded-lg bg-primary-700 px-3.5 py-2 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-primary-600 transition-colors">
+                        <svg class="-ml-1 mr-1.5 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
                         </svg>
-                        Create New Jobcard
+                        <span class="hidden sm:inline">Create </span>New Jobcard
                     </Link>
                 </div>
             </div>
@@ -138,33 +134,33 @@ const formatLicensePlate = (plate) => {
 
         <div class="mt-4">
             <!-- Tabs -->
-            <div class="flex justify-center mb-8">
-                <nav class="flex space-x-1 rounded-full bg-gray-200/50 p-1" aria-label="Tabs">
+            <div class="flex justify-start sm:justify-center overflow-x-auto pb-2 sm:pb-0 mb-6 sm:mb-8 no-scrollbar">
+                <nav class="flex space-x-1 rounded-full bg-gray-200/50 p-1 shrink-0" aria-label="Tabs">
                     <button v-for="tab in tabs" :key="tab" @click="activeTab = tab" 
-                            :class="[activeTab === tab ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900', 'rounded-full px-5 py-2 text-sm font-bold transition-all duration-200']">
+                            :class="[activeTab === tab ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900', 'rounded-full px-3.5 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-bold transition-all duration-200 whitespace-nowrap']">
                         {{ tab }}
                     </button>
                 </nav>
             </div>
 
             <!-- Filters & Controls -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-8">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 mb-6 sm:mb-8">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
                     <div class="flex-1 w-full relative">
                         <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                 <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
                             </svg>
                         </div>
-                        <input v-model="searchQuery" type="text" class="block w-full rounded-lg border-0 py-3 pl-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6" placeholder="Search job cards, customer, vehicle...">
+                        <input v-model="searchQuery" type="text" class="block w-full rounded-lg border-0 py-2 sm:py-2.5 pl-9 sm:pl-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 text-xs sm:text-sm" placeholder="Search job cards, customer, vehicle...">
                     </div>
-                    <div class="flex items-center gap-3">
-                        <select class="rounded-lg border-0 py-3 pl-4 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <select class="rounded-lg border-0 py-2 sm:py-2.5 pl-3 sm:pl-4 pr-8 sm:pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 text-xs sm:text-sm">
                             <option>All Status</option>
                         </select>
-                        <button class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
-                            <svg class="mr-2 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
-                            Show Filters
+                        <button class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors whitespace-nowrap">
+                            <svg class="mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                            <span class="hidden sm:inline">Show </span>Filters
                         </button>
                     </div>
                 </div>

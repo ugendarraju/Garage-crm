@@ -212,28 +212,28 @@ const handleVehicleSelect = (e) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <Link :href="route('job-cards.index')" class="p-2 rounded-full hover:bg-gray-200 transition-colors">
-                        <svg class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <Link :href="route('job-cards.index')" class="p-1.5 sm:p-2 rounded-full hover:bg-gray-200 transition-colors shrink-0">
+                        <svg class="h-5 w-5 sm:h-6 sm:w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                     </Link>
                     <div>
-                        <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Job Card Workspace</h1>
-                        <p class="mt-1 text-sm text-gray-500 font-medium">Create customers, register vehicles, attach media, and build job cards.</p>
+                        <h1 class="text-xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Job Card Workspace</h1>
+                        <p class="mt-0.5 sm:mt-1 text-xs sm:text-sm text-gray-500 font-medium">Create customers, register vehicles, and build job cards.</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-3">
-                    <button type="button" @click="showNewCustomerForm = true; form.customer_id = ''" class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
-                        <svg class="mr-2 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
-                        Add Customer
+                <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" @click="showNewCustomerForm = true; form.customer_id = ''" class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
+                        <svg class="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                        <span class="hidden sm:inline">Add </span>Customer
                     </button>
-                    <button type="button" @click="showNewVehicleForm = true; form.vehicle_id = ''" class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
-                        <svg class="mr-2 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        Add Vehicle
+                    <button type="button" @click="showNewVehicleForm = true; form.vehicle_id = ''" class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
+                        <svg class="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="hidden sm:inline">Add </span>Vehicle
                     </button>
-                    <button type="button" @click="scrollToMechanics" class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
-                        <svg class="mr-2 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                        Add Mechanic
+                    <button type="button" @click="scrollToMechanics" class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
+                        <svg class="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        <span class="hidden sm:inline">Add </span>Mechanic
                     </button>
                 </div>
             </div>
@@ -511,7 +511,6 @@ const handleVehicleSelect = (e) => {
                                 Services & Parts
                             </h3>
                             <div class="flex items-center gap-3">
-                                <button type="button" @click="alert('Presets coming soon!')" class="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-200">Apply Presets (0)</button>
                                 <button type="button" @click="addItem" class="px-3 py-1.5 bg-primary-700 text-white text-xs font-bold rounded-lg hover:bg-primary-600">+ Add Item</button>
                             </div>
                         </div>
