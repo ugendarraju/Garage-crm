@@ -16,6 +16,7 @@ class SystemSettingService
         'crm_subheading' => 'Smart Workspace',
         'crm_logo_path' => null,
         'crm_logo_size' => 36,
+        'crm_favicon_path' => null,
     ];
 
     /**
@@ -83,6 +84,23 @@ class SystemSettingService
         }
 
         // If it's already an absolute URL
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        return asset('storage/' . ltrim($path, '/'));
+    }
+
+    /**
+     * Get the full URL of the uploaded favicon, or null if none
+     */
+    public static function getFaviconUrl(): ?string
+    {
+        $path = self::get('crm_favicon_path');
+        if (!$path) {
+            return null;
+        }
+
         if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
             return $path;
         }

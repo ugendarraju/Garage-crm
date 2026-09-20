@@ -46,6 +46,7 @@ class HandleInertiaRequests extends Middleware
             'subheading' => \App\Services\SystemSettingService::get('crm_subheading', 'Smart Workspace'),
             'logo_url' => \App\Services\SystemSettingService::getLogoUrl(),
             'logo_size' => (int) \App\Services\SystemSettingService::get('crm_logo_size', 36),
+            'favicon_url' => \App\Services\SystemSettingService::getFaviconUrl(),
         ];
 
         return [

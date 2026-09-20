@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import AIAssistantWidget from '@/Components/AIAssistantWidget.vue';
@@ -14,6 +14,24 @@ const crmName = computed(() => page.props.system_settings?.name || 'GarageSaarth
 const crmSubheading = computed(() => page.props.system_settings?.subheading || 'Smart Workspace');
 const crmLogoUrl = computed(() => page.props.system_settings?.logo_url || null);
 const crmLogoSize = computed(() => page.props.system_settings?.logo_size || 36);
+const crmFaviconUrl = computed(() => page.props.system_settings?.favicon_url || null);
+
+const updateFavicon = (url) => {
+    if (typeof document === 'undefined') return;
+    let link = document.querySelector("link[rel~='icon']");
+    if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.getElementsByTagName('head')[0].appendChild(link);
+    }
+    link.href = url || '/favicon.ico';
+};
+
+watch(crmFaviconUrl, (newUrl) => {
+    if (newUrl) {
+        updateFavicon(newUrl);
+    }
+}, { immediate: true });
 
 const crmInitials = computed(() => {
     const name = (crmName.value || 'GS').trim();

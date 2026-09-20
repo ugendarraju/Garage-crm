@@ -22,6 +22,7 @@ class SystemSettingsController extends Controller
 
         $settings = SystemSettingService::getAll();
         $settings['logo_url'] = SystemSettingService::getLogoUrl();
+        $settings['favicon_url'] = SystemSettingService::getFaviconUrl();
 
         return Inertia::render('SuperAdmin/Settings/Index', [
             'settings' => $settings,
@@ -44,6 +45,8 @@ class SystemSettingsController extends Controller
             'crm_logo_size' => 'nullable|integer|min:20|max:80',
             'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
             'remove_logo' => 'nullable|boolean',
+            'favicon' => 'nullable|file|mimes:ico,png,svg,jpg,jpeg,webp|max:1024',
+            'remove_favicon' => 'nullable|boolean',
         ]);
 
         $settingsData = [
@@ -61,7 +64,7 @@ class SystemSettingsController extends Controller
             $settingsData['crm_logo_path'] = null;
         }
 
-        // Handle file upload
+        // Handle logo file upload
         if ($request->hasFile('logo')) {
             $currentLogo = SystemSettingService::get('crm_logo_path');
             if ($currentLogo) {
@@ -72,6 +75,38 @@ class SystemSettingsController extends Controller
             $settingsData['crm_logo_path'] = $path;
 
             // Also copy to public/storage/branding if possible to guarantee web accessibility
+            try {
+                $destination = public_path('storage/' . $path);
+                $destDir = dirname($destination);
+                if (!is_dir($destDir)) {
+                    @mkdir($destDir, 0755, true);
+                }
+                @copy(Storage::disk('public')->path($path), $destination);
+            } catch (\Throwable $e) {
+                // Ignore copy errors
+            }
+        }
+
+        // Handle removing favicon
+        if (!empty($validated['remove_favicon'])) {
+            $currentFavicon = SystemSettingService::get('crm_favicon_path');
+            if ($currentFavicon) {
+                Storage::disk('public')->delete($currentFavicon);
+            }
+            $settingsData['crm_favicon_path'] = null;
+        }
+
+        // Handle favicon file upload
+        if ($request->hasFile('favicon')) {
+            $currentFavicon = SystemSettingService::get('crm_favicon_path');
+            if ($currentFavicon) {
+                Storage::disk('public')->delete($currentFavicon);
+            }
+
+            $path = $request->file('favicon')->store('branding', 'public');
+            $settingsData['crm_favicon_path'] = $path;
+
+            // Also copy to public/storage/branding and public/favicon.ico if possible
             try {
                 $destination = public_path('storage/' . $path);
                 $destDir = dirname($destination);

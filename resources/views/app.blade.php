@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
         <title inertia>{{ \App\Services\SystemSettingService::get('crm_name', config('app.name', 'GarageSaarthi')) }}</title>
+        <link rel="icon" href="{{ \App\Services\SystemSettingService::getFaviconUrl() ?: asset('favicon.ico') }}">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
