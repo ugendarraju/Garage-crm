@@ -29,8 +29,17 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        $activeGarageId = \App\Models\Garage::getActiveGarageId();
-        $garage = $activeGarageId ? \App\Models\Garage::find($activeGarageId) : null;
+        if (!file_exists(storage_path('installed')) || $request->is('install*')) {
+            return parent::share($request);
+        }
+
+        try {
+            $activeGarageId = \App\Models\Garage::getActiveGarageId();
+            $garage = $activeGarageId ? \App\Models\Garage::find($activeGarageId) : null;
+        } catch (\Throwable $e) {
+            $activeGarageId = null;
+            $garage = null;
+        }
         
         return [
             ...parent::share($request),
