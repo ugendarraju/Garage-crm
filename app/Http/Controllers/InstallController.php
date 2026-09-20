@@ -40,6 +40,9 @@ class InstallController extends Controller
 
     public function setup(Request $request)
     {
+        @set_time_limit(300);
+        @ini_set('memory_limit', '512M');
+
         if (file_exists(storage_path('installed'))) {
             return redirect('/');
         }
@@ -72,16 +75,20 @@ class InstallController extends Controller
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_TIMEOUT => 5,
             ]);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return back()->withInput()->with('error', 'Database Connection Failed: ' . $e->getMessage());
         }
 
         try {
+            // Generate real cryptographic APP_KEY
+            $appKey = 'base64:' . base64_encode(random_bytes(32));
+
             // 2. Write .env file
             $this->updateEnv([
                 'APP_NAME' => $appName,
                 'APP_ENV' => 'production',
                 'APP_DEBUG' => 'false',
+                'APP_KEY' => $appKey,
                 'APP_URL' => $appUrl,
                 'DB_CONNECTION' => 'mysql',
                 'DB_HOST' => $dbHost,
@@ -89,14 +96,14 @@ class InstallController extends Controller
                 'DB_DATABASE' => $dbName,
                 'DB_USERNAME' => $dbUser,
                 'DB_PASSWORD' => $dbPass,
+                'SESSION_DRIVER' => 'file',
+                'CACHE_STORE' => 'file',
+                'QUEUE_CONNECTION' => 'sync',
             ]);
 
-            // 3. Generate APP_KEY if missing
-            if (empty(env('APP_KEY'))) {
-                Artisan::call('key:generate', ['--force' => true]);
-            }
+            config(['app.key' => $appKey]);
 
-            // 4. Configure Laravel database connection dynamically
+            // 3. Configure Laravel database connection dynamically
             config([
                 'database.default' => 'mysql',
                 'database.connections.mysql.host' => $dbHost,
@@ -109,17 +116,29 @@ class InstallController extends Controller
             DB::purge('mysql');
             DB::reconnect('mysql');
 
-            // 5. Run migrations
+            // 4. Run migrations
             Artisan::call('migrate', ['--force' => true]);
 
-            // 6. Run database seeders if brands table is empty
-            $brandsCount = DB::table('vehicle_brands')->count();
-            if ($brandsCount === 0) {
-                Artisan::call('db:seed', ['--force' => true]);
+            // 5. Run seeders if brands table is empty
+            try {
+                $brandsCount = DB::table('vehicle_brands')->count();
+                if ($brandsCount === 0) {
+                    Artisan::call('db:seed', ['--force' => true]);
+                }
+            } catch (\Throwable $se) {
+                // Non-fatal if seeds already exist or optional
+            }
+
+            // 6. Create default garage if none exists
+            if (\App\Models\Garage::count() === 0) {
+                \App\Models\Garage::create([
+                    'name' => $appName,
+                    'is_active' => true,
+                ]);
             }
 
             // 7. Create or update Super Admin user
-            $admin = User::updateOrCreate(
+            User::updateOrCreate(
                 ['email' => $request->input('admin_email')],
                 [
                     'name' => $request->input('admin_name'),
@@ -132,16 +151,16 @@ class InstallController extends Controller
             // 8. Create storage symlink
             try {
                 Artisan::call('storage:link');
-            } catch (Exception $e) {
-                // Ignore if symlink already exists
+            } catch (\Throwable $e) {
+                // Ignore if symlink exists
             }
 
             // 9. Clear cache
             try {
                 Artisan::call('config:clear');
                 Artisan::call('cache:clear');
-            } catch (Exception $e) {
-                // Cache clear failure can be non-fatal
+            } catch (\Throwable $e) {
+                // Non-fatal
             }
 
             // 10. Mark application as installed
@@ -156,7 +175,8 @@ class InstallController extends Controller
                 'loginUrl' => url('/login'),
             ]);
 
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+            \Log::error('Installation Failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return back()->withInput()->with('error', 'Installation Failed: ' . $e->getMessage());
         }
     }

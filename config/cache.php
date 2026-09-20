@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'default' => env('CACHE_STORE', 'file'),
+    'default' => file_exists(storage_path('installed')) ? env('CACHE_STORE', 'file') : 'file',
 
     /*
     |--------------------------------------------------------------------------

@@ -18,7 +18,7 @@ return [
     |
     */
 
-    'driver' => env('SESSION_DRIVER', 'file'),
+    'driver' => file_exists(storage_path('installed')) ? env('SESSION_DRIVER', 'file') : 'file',
 
     /*
     |--------------------------------------------------------------------------
