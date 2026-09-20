@@ -116,8 +116,12 @@ class InstallController extends Controller
             DB::purge('mysql');
             DB::reconnect('mysql');
 
-            // 4. Run migrations
-            Artisan::call('migrate', ['--force' => true]);
+            // 4. Run migrations (fresh to ensure clean schema on initial setup or retry)
+            try {
+                Artisan::call('migrate:fresh', ['--force' => true]);
+            } catch (\Throwable $mfe) {
+                Artisan::call('migrate', ['--force' => true]);
+            }
 
             // 5. Run seeders if brands table is empty
             try {
