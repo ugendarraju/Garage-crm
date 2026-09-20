@@ -8,11 +8,18 @@ class Garage extends Model
 {
     protected $fillable = [
         'name',
+        'tagline',
         'address',
         'phone',
         'email',
         'is_active',
         'ai_api_key',
+        'logo_path',
+        'header_logo_size',
+        'gst_number',
+        'bank_details',
+        'upi_id',
+        'qr_code_path',
     ];
 
     public function owner()
