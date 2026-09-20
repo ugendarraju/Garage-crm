@@ -41,8 +41,16 @@ class HandleInertiaRequests extends Middleware
             $garage = null;
         }
         
+        $systemSettings = [
+            'name' => \App\Services\SystemSettingService::get('crm_name', 'GarageSaarthi'),
+            'subheading' => \App\Services\SystemSettingService::get('crm_subheading', 'Smart Workspace'),
+            'logo_url' => \App\Services\SystemSettingService::getLogoUrl(),
+            'logo_size' => (int) \App\Services\SystemSettingService::get('crm_logo_size', 36),
+        ];
+
         return [
             ...parent::share($request),
+            'system_settings' => $systemSettings,
             'auth' => [
                 'user' => $request->user(),
                 'active_garage_id' => $activeGarageId,

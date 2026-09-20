@@ -248,6 +248,10 @@ Route::middleware('auth')->group(function () {
     // AI Assistant
     Route::post('/ai-assistant/key', [\App\Http\Controllers\AIAssistantController::class, 'updateKey'])->name('ai-assistant.key');
     Route::post('/ai-assistant/command', [\App\Http\Controllers\AIAssistantController::class, 'processCommand'])->name('ai-assistant.command');
+
+    // Super Admin CRM Settings
+    Route::get('/admin/settings', [\App\Http\Controllers\SuperAdmin\SystemSettingsController::class, 'edit'])->name('admin.settings.index');
+    Route::post('/admin/settings', [\App\Http\Controllers\SuperAdmin\SystemSettingsController::class, 'update'])->name('admin.settings.update');
 });
 
 require __DIR__.'/auth.php';

@@ -10,10 +10,25 @@ const page = usePage();
 const user = computed(() => page.props.auth.user);
 const activeGarageId = computed(() => page.props.auth.active_garage_id);
 
+const crmName = computed(() => page.props.system_settings?.name || 'GarageSaarthi');
+const crmSubheading = computed(() => page.props.system_settings?.subheading || 'Smart Workspace');
+const crmLogoUrl = computed(() => page.props.system_settings?.logo_url || null);
+const crmLogoSize = computed(() => page.props.system_settings?.logo_size || 36);
+
+const crmInitials = computed(() => {
+    const name = (crmName.value || 'GS').trim();
+    const parts = name.split(/\s+/);
+    if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+});
+
 const navigation = computed(() => {
     if (user.value.role === 'super_admin' && !activeGarageId.value) {
         return [
-            { name: 'Garages', href: route('garages.index'), current: route().current('garages.*'), icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' }
+            { name: 'Garages', href: route('garages.index'), current: route().current('garages.*'), icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
+            { name: 'Settings', href: route('admin.settings.index'), current: route().current('admin.settings.*'), icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' }
         ];
     }
     if (user.value.role === 'customer') {
@@ -60,13 +75,20 @@ const exitGarage = () => {
             <!-- Desktop Sidebar -->
             <aside class="hidden w-64 flex-col bg-white md:flex border-r border-gray-200 shadow-sm z-20">
                 <div class="flex h-20 shrink-0 items-center px-6 border-b border-gray-100">
-                    <Link :href="route('dashboard')" class="flex items-center gap-2">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-600 text-white font-bold text-xl shadow-lg shadow-primary-900/20">
+                    <Link :href="route('dashboard')" class="flex items-center gap-3 overflow-hidden">
+                        <img
+                            v-if="crmLogoUrl"
+                            :src="crmLogoUrl"
+                            class="object-contain rounded shrink-0 max-w-[48px]"
+                            :style="{ height: crmLogoSize + 'px' }"
+                            alt="Logo"
+                        />
+                        <div v-else class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-600 text-white font-bold text-xl shadow-lg shadow-primary-900/20">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                         </div>
-                        <div>
-                            <span class="text-xl font-extrabold text-gray-900 tracking-tight leading-none block">GarageSaarthi</span>
-                            <span class="text-[10px] text-gray-500 font-semibold leading-none uppercase tracking-wider">Smart Workspace</span>
+                        <div class="overflow-hidden">
+                            <span class="text-xl font-extrabold text-gray-900 tracking-tight leading-none block truncate">{{ crmName }}</span>
+                            <span v-if="crmSubheading" class="text-[10px] text-gray-500 font-semibold leading-none uppercase tracking-wider block mt-1 truncate">{{ crmSubheading }}</span>
                         </div>
                     </Link>
                 </div>
@@ -93,8 +115,14 @@ const exitGarage = () => {
                     </button>
                     
                     <div class="md:hidden flex items-center">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600 text-white font-bold text-xl">
-                            GS
+                        <img
+                            v-if="crmLogoUrl"
+                            :src="crmLogoUrl"
+                            class="h-8 w-auto max-w-[40px] object-contain rounded"
+                            alt="Logo"
+                        />
+                        <div v-else class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600 text-white font-bold text-xs shadow-sm">
+                            {{ crmInitials }}
                         </div>
                     </div>
 
@@ -114,7 +142,10 @@ const exitGarage = () => {
                                 </template>
                             </h2>
                             <span class="text-xs text-gray-500 font-medium">
-                                <template v-if="$page.props.auth.active_garage?.tagline">
+                                <template v-if="$page.props.auth.user.role === 'super_admin' && !activeGarageId">
+                                    {{ crmSubheading || 'Smart Garage Management' }}
+                                </template>
+                                <template v-else-if="$page.props.auth.active_garage?.tagline">
                                     {{ $page.props.auth.active_garage.tagline }}
                                 </template>
                                 <template v-else>
@@ -153,7 +184,15 @@ const exitGarage = () => {
                 <div v-show="showingNavigationDropdown" class="md:hidden absolute inset-0 z-40 bg-gray-900/80 backdrop-blur-sm transition-opacity" @click="showingNavigationDropdown = false"></div>
                 <div v-show="showingNavigationDropdown" class="md:hidden absolute inset-y-0 left-0 z-50 w-72 bg-gray-900 shadow-2xl transform transition-transform">
                     <div class="flex h-20 shrink-0 items-center justify-between px-6 border-b border-gray-800">
-                        <span class="text-xl font-bold text-white tracking-tight">GarageSaarthi</span>
+                        <div class="flex items-center gap-2 overflow-hidden">
+                            <img
+                                v-if="crmLogoUrl"
+                                :src="crmLogoUrl"
+                                class="h-7 w-auto object-contain rounded shrink-0"
+                                alt="Logo"
+                            />
+                            <span class="text-xl font-bold text-white tracking-tight truncate">{{ crmName }}</span>
+                        </div>
                         <button @click="showingNavigationDropdown = false" class="text-gray-400 hover:text-white transition-colors">
                             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
