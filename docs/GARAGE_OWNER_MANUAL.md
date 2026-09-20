@@ -276,4 +276,32 @@ Your CRM includes an intelligent AI assistant accessible via the floating icon i
 
 ---
 
+## 16. Customer Portal & Vehicle Owner User Guide (Shareable)
+
+You can share these instructions with your workshop customers:
+
+### How Customers Can Log In & Track Repairs
+1. Visit your workshop's portal URL on your mobile phone browser.
+2. Log in using your registered mobile number or email address.
+3. On **My Dashboard**, view:
+   - **Active Job Cards**: Real-time status (`Scheduled` ➔ `Working` ➔ `Completed` ➔ `Delivered`).
+   - **Itemized Estimate**: Labor and spare parts breakdown with GST.
+   - **Expected Completion Date & Time**.
+
+### How Customers Can Book Appointments Online
+1. Click **Raise Service Request** on your dashboard (or visit `/book`).
+2. Pick your vehicle, required service packages (General Service, Oil Change, Water Wash, etc.), preferred date, and arrival time.
+3. Add any notes about noises or issues.
+4. Your booking is sent to the workshop for bay reservation.
+
+### How Customers Pay via UPI QR Code
+1. Open your completed Job Card or Tax Invoice.
+2. Scan the workshop's verified **UPI QR Code** using Google Pay, PhonePe, or Paytm.
+3. Pay the exact invoice amount.
+4. Take a screenshot of the payment and click **Upload Payment Screenshot** on your Job Card screen.
+5. Workshop front desk gets instant confirmation and releases your vehicle keys!
+
+---
+
 *This documentation is maintained in your CRM repository under `docs/GARAGE_OWNER_MANUAL.md`. Any new features added to the platform will be automatically documented here.*
+

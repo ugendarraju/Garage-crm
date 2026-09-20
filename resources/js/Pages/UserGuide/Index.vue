@@ -1,18 +1,22 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
+const page = usePage();
+const userRole = computed(() => page.props.auth?.user?.role || 'owner');
+
 const searchQuery = ref('');
-const selectedCategory = ref('all');
+const selectedCategory = ref(userRole.value === 'customer' ? 'for_customers' : 'all');
 const openItem = ref(null);
 
 const categories = [
     { id: 'all', name: 'All Guides' },
+    { id: 'for_customers', name: '📱 For Vehicle Owners (Customers)' },
     { id: 'setup', name: '🚀 Day 1 Setup' },
     { id: 'job_cards', name: '🛠️ Job Cards' },
     { id: 'billing', name: '🧾 Invoices & Payments' },
-    { id: 'customers', name: '👥 Customers & Portal' },
+    { id: 'customers', name: '👥 Workshop Customers' },
     { id: 'inventory', name: '📦 Inventory & Parts' },
     { id: 'staff', name: '🧑‍🔧 Staff & Mechanics' },
     { id: 'bookings', name: '📅 Online Bookings' },
@@ -20,14 +24,16 @@ const categories = [
 ];
 
 const quickSearchTags = [
+    'Customer portal',
+    'Book online',
+    'Track vehicle',
+    'UPI QR code',
     'Add customer',
     'Create job card',
-    'UPI QR code',
     'Print invoice',
+    'Bulk import parts',
     'Add mechanic',
-    'Add spare parts',
-    'Inspection photos',
-    'Discount coupons',
+    'Upload payment proof',
 ];
 
 const guides = [
@@ -298,6 +304,147 @@ const guides = [
             'You are now ready to create job cards and issue professional invoices!'
         ],
         tip: 'Bookmark your login page on your mobile phone and shop tablet for quick access throughout the day.'
+    },
+    // Dedicated Guides for Vehicle Owners (Customers)
+    {
+        id: 'customer-login-track',
+        category: 'for_customers',
+        title: 'Customer Guide: How to Log In & Track Your Vehicle Repair Live',
+        summary: 'Check real-time repair progress, assigned technicians, estimate costs, and expected delivery date.',
+        keywords: ['customer login', 'track vehicle', 'live repair status', 'repair progress', 'customer portal', 'check vehicle status', 'mechanic assigned', 'expected delivery'],
+        actionRoute: 'dashboard',
+        actionText: 'Open Customer Dashboard',
+        steps: [
+            'Open your workshop\'s CRM website on your phone or laptop browser.',
+            'Log in using your registered mobile number or email address (your workshop creates this when you check in your vehicle).',
+            'On your **My Dashboard**, you will immediately see: Active Jobs, Assigned Vehicle, and Total Lifetime Spent.',
+            'Click on any Job Card Number (e.g., `JC-1002`) to view the real-time status: `Scheduled` ➔ `Working` ➔ `Completed` ➔ `Delivered`.',
+            'View the itemized labor and parts breakdown, technician notes, and total bill estimate before pickup.'
+        ],
+        tip: 'Bookmark the login page on your smartphone home screen for 1-tap live repair tracking anytime!'
+    },
+    {
+        id: 'customer-online-booking',
+        category: 'for_customers',
+        title: 'Customer Guide: How to Book a Service Appointment Online',
+        summary: 'Schedule vehicle maintenance, select requested services, choose preferred date/time, and avoid waiting queues.',
+        keywords: ['book service', 'online booking', 'service appointment', 'schedule repair', 'book appointment', 'raise request', 'car service', 'bike service'],
+        actionRoute: 'service-requests.create',
+        actionText: 'Book Service Online',
+        steps: [
+            'Click **Raise Service Request** from your dashboard (or visit the workshop\'s public `/book` link).',
+            'Select or enter your vehicle details (Make, Model, Registration Number).',
+            'Choose the required service package (e.g., General Service, Oil Change, Water Wash, Brake Overhaul).',
+            'Select your preferred service date and arrival time slot.',
+            'Describe any specific problems (e.g., "Squeaking sound from front left wheel when braking").',
+            'Submit your booking. The workshop will review and approve your slot immediately.'
+        ],
+        tip: 'Booking your appointment 24 hours in advance ensures the workshop reserves dedicated technician bays and required filters.'
+    },
+    {
+        id: 'customer-upi-payment',
+        category: 'for_customers',
+        title: 'Customer Guide: How to Pay Invoices via UPI QR Code & Upload Payment Proof',
+        summary: 'Pay your bill directly from Google Pay, PhonePe, or Paytm and upload payment screenshots for instant gate pass clearance.',
+        keywords: ['pay invoice', 'upi payment', 'upi qr code', 'phonepe', 'google pay', 'paytm', 'upload screenshot', 'payment proof', 'settle bill'],
+        actionRoute: 'dashboard',
+        actionText: 'View My Invoices',
+        steps: [
+            'Open your completed Job Card from your Customer Dashboard.',
+            'Under the payment section or on the tax invoice, you will see the workshop\'s official **UPI ID** and **Verified UPI QR Code**.',
+            'Open your preferred payment app (Google Pay, PhonePe, Paytm, BHIM) and scan the QR code.',
+            'Complete the transfer for the exact invoice amount.',
+            'Take a screenshot of the payment successful screen on your phone.',
+            'Click **Upload Payment Screenshot** on your job card screen and select the image.',
+            'The workshop manager instantly verifies your transaction and issues your vehicle delivery clearance.'
+        ],
+        tip: 'Uploading the screenshot saves you time at the cashier counter so you can pick up your keys without waiting.'
+    },
+    {
+        id: 'customer-manage-vehicles',
+        category: 'for_customers',
+        title: 'Customer Guide: How to Add & Manage Your Vehicles',
+        summary: 'Keep complete service history, oil change records, and invoices organized for all your family or commercial vehicles.',
+        keywords: ['add vehicle', 'register vehicle', 'my cars', 'my bikes', 'vehicle profile', 'service records', 'registration number'],
+        actionRoute: 'dashboard',
+        actionText: 'Manage My Vehicles',
+        steps: [
+            'Log in to your Customer Dashboard.',
+            'In the **My Vehicles** card, click **+ Add New**.',
+            'Select your vehicle **Brand** (e.g., Maruti Suzuki, Hyundai, Honda, Yamaha).',
+            'Select the specific **Model** (e.g., Swift, Creta, Activa, City).',
+            'Enter your vehicle **Registration Number** (e.g., KA01AB1234) and year of manufacture.',
+            'Click **Add Vehicle**.',
+            'Your vehicle is now linked to your account, and all future repair orders will be organized under this profile.'
+        ],
+        tip: 'You can add multiple cars and 2-wheelers under one single phone number for whole-family vehicle tracking.'
+    },
+    {
+        id: 'customer-profile-password',
+        category: 'for_customers',
+        title: 'Customer Guide: How to Update Your Profile & Reset Password',
+        summary: 'Update your contact information, change your password, or recover access if you get locked out.',
+        keywords: ['reset password', 'forgot password', 'change password', 'customer profile', 'update phone', 'edit profile'],
+        actionRoute: 'profile.edit',
+        actionText: 'My Profile Settings',
+        steps: [
+            'Click on your name in the top right navigation bar → Select **Profile**.',
+            'Update your Name, Email Address, or Phone Number.',
+            'Under **Update Password**, enter your current password followed by your new password, then click **Save**.',
+            'Forgot your password? Simply inform the workshop front desk or call them; the workshop manager can reset your password with 1 click from their Customer CRM console.'
+        ],
+        tip: 'Keep your mobile number updated so you receive automatic service updates and bill notifications.'
+    },
+    // Advanced Workshop Guides
+    {
+        id: 'inventory-bulk-import',
+        category: 'inventory',
+        title: 'How to Bulk Import Spare Parts & Inventory via Excel / CSV',
+        summary: 'Upload hundreds of spare parts, SKU codes, minimum stock limits, and prices in seconds.',
+        keywords: ['bulk import', 'csv import', 'excel import', 'upload parts', 'import inventory', 'parts spreadsheet'],
+        actionRoute: 'inventory.index',
+        actionText: 'Go to Inventory',
+        steps: [
+            'Go to **Inventory** in the left sidebar menu.',
+            'Click the **Bulk Import** button at the top of the table.',
+            'Download the sample CSV template to see the required column format (Part Name, Part Number, Category, Brand, Purchase Price, Selling Price, Quantity, Min Stock).',
+            'Fill in your supplier or workshop parts list in Excel and export as CSV.',
+            'Click **Choose File**, select your `.csv` spreadsheet, and click **Import Parts**.',
+            'The system will parse all rows and create categories, brands, and stock items automatically.'
+        ],
+        tip: 'Bulk import is especially helpful when migrating from an old software or setting up an existing workshop inventory on Day 1.'
+    },
+    {
+        id: 'inventory-export-reports',
+        category: 'inventory',
+        title: 'How to Export Inventory & Stock Valuation to Excel / CSV',
+        summary: 'Download complete stock spreadsheets for monthly audits, accountant reviews, and tax reporting.',
+        keywords: ['export inventory', 'download stock', 'inventory excel', 'stock valuation', 'inventory report', 'stock audit'],
+        actionRoute: 'inventory.index',
+        actionText: 'Export Inventory',
+        steps: [
+            'Click **Inventory** in the sidebar.',
+            'Click the **Export CSV** button in the header.',
+            'Your browser will immediately download a `.csv` spreadsheet containing every part name, SKU number, quantity on hand, unit cost, selling price, and total stock valuation.',
+            'Open the file in Microsoft Excel or Google Sheets for physical stock verification or sharing with your accountant.'
+        ],
+        tip: 'Perform a monthly physical stock count and compare with your exported sheet to catch discrepancies early.'
+    },
+    {
+        id: 'vehicle-database-management',
+        category: 'setup',
+        title: 'How to Manage Vehicle Brands & Models Database',
+        summary: 'Add custom vehicle brands and model variants so mechanics and advisors can easily select them.',
+        keywords: ['vehicle database', 'vehicle brands', 'vehicle models', 'add brand', 'add model', 'car makes', 'bike models'],
+        actionRoute: 'vehicle-brands.index',
+        actionText: 'Manage Vehicle Database',
+        steps: [
+            'Go to **Vehicle Database** (or Brands / Models) in the sidebar.',
+            'To add a new manufacturer (e.g. MG Motor, Royal Enfield, Ather, Ola), click **+ Add Brand**.',
+            'To add specific model variants (e.g. Classic 350, Hunter 350), select the brand and click **+ Add Model**.',
+            'These brands and models will now appear automatically in customer registration, job card creation, and online booking dropdowns.'
+        ],
+        tip: 'You can also create brand-new models directly inside the Job Card screen without having to navigate to this page.'
     }
 ];
 
