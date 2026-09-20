@@ -70,8 +70,8 @@ const startListening = () => {
 </script>
 
 <template>
-    <div class="fixed bottom-6 right-6 z-50">
-        <div v-if="isOpen" class="bg-white rounded-xl shadow-2xl border border-gray-200 w-80 mb-4 overflow-hidden flex flex-col h-96">
+    <div class="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
+        <div v-if="isOpen" class="bg-white rounded-xl shadow-2xl border border-gray-200 w-[calc(100vw-2rem)] sm:w-80 max-w-sm mb-4 overflow-hidden flex flex-col h-96">
             <div class="bg-gray-900 px-4 py-3 text-white flex justify-between items-center">
                 <div class="flex items-center gap-2">
                     <svg class="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>

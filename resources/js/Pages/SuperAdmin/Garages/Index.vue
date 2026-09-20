@@ -101,15 +101,15 @@ const submitPasswordReset = (id) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex justify-between items-center">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h2 class="font-semibold text-2xl text-gray-800 dark:text-gray-200 leading-tight">Master Dashboard</h2>
-                <button @click="showModal = true" class="px-4 py-2 bg-orange-500 text-white rounded-xl shadow-lg hover:bg-orange-600 transition font-semibold">
+                <button @click="showModal = true" class="w-full sm:w-auto px-4 py-2 bg-orange-500 text-white rounded-xl shadow-lg hover:bg-orange-600 transition font-semibold text-center">
                     + Add New Garage
                 </button>
             </div>
         </template>
 
-        <div class="py-12">
+        <div class="py-6 sm:py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 
                 <div v-if="$page.props.flash?.success" class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
@@ -130,8 +130,8 @@ const submitPasswordReset = (id) => {
                     </div>
                 </div>
 
-                <div class="bg-white dark:bg-zinc-800 shadow-sm sm:rounded-lg overflow-hidden border border-gray-100 dark:border-zinc-700">
-                    <table class="w-full text-left">
+                <div class="bg-white dark:bg-zinc-800 shadow-sm sm:rounded-lg overflow-x-auto border border-gray-100 dark:border-zinc-700">
+                    <table class="min-w-full text-left">
                         <thead class="bg-gray-50 dark:bg-zinc-900/50">
                             <tr>
                                 <th class="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">Garage Name</th>
@@ -149,11 +149,11 @@ const submitPasswordReset = (id) => {
                                         </button>
                                     </div>
                                 </td>
-                                <td class="p-4">
+                                <td class="p-4 whitespace-nowrap">
                                     <span v-if="garage.is_active" class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">Active</span>
                                     <span v-else class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full font-medium">Inactive</span>
                                 </td>
-                                <td class="p-4 text-right space-x-2">
+                                <td class="p-4 text-right whitespace-nowrap space-x-2">
                                     <button @click="toggleActive(garage.id)" :class="[garage.is_active ? 'text-orange-500 hover:bg-orange-50' : 'text-green-600 hover:bg-green-50', 'px-3 py-2 rounded-lg transition font-medium text-sm']">
                                         {{ garage.is_active ? 'Disable' : 'Enable' }}
                                     </button>
@@ -242,13 +242,13 @@ const submitPasswordReset = (id) => {
                     <h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-3">Current Owners</h4>
                     <div class="space-y-3">
                         <div v-for="owner in selectedGarage.owners" :key="owner.id" class="flex flex-col bg-gray-50 dark:bg-zinc-900 p-3 rounded-xl border border-gray-100 dark:border-zinc-700">
-                            <div class="flex items-center justify-between w-full">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-3">
                                 <div>
                                     <div class="font-medium text-gray-900 dark:text-white">{{ owner.name }}</div>
                                     <div class="text-xs text-gray-500">{{ owner.email }}</div>
                                 </div>
                                 
-                                <div v-if="resettingOwnerId !== owner.id" class="flex items-center gap-2">
+                                <div v-if="resettingOwnerId !== owner.id" class="flex flex-wrap items-center gap-2">
                                     <span :class="owner.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'" class="px-2 py-1 text-xs rounded-full font-medium">
                                         {{ owner.is_active ? 'Active' : 'Disabled' }}
                                     </span>
