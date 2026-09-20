@@ -10,8 +10,17 @@ use Illuminate\Support\Str;
 
 class GarageOwnerController extends Controller
 {
+    private function authorizeSuperAdmin(): void
+    {
+        if (!auth()->check() || auth()->user()->role !== 'super_admin') {
+            abort(403, 'Unauthorized access.');
+        }
+    }
+
     public function store(Request $request, Garage $garage)
     {
+        $this->authorizeSuperAdmin();
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
@@ -34,6 +43,8 @@ class GarageOwnerController extends Controller
 
     public function toggleActive($id)
     {
+        $this->authorizeSuperAdmin();
+
         $user = User::findOrFail($id);
         
         // Ensure we are only toggling an owner
@@ -50,6 +61,8 @@ class GarageOwnerController extends Controller
 
     public function resetPassword(Request $request, $id)
     {
+        $this->authorizeSuperAdmin();
+
         $user = User::findOrFail($id);
         
         if ($user->role !== 'owner') {

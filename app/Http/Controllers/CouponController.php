@@ -3,18 +3,32 @@
 namespace App\Http\Controllers;
 
 use App\Models\Coupon;
+use App\Models\Garage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
 
 class CouponController extends Controller
 {
+    private function authorizeStaff(): void
+    {
+        if (!auth()->check() || auth()->user()->role === 'customer') {
+            abort(403, 'Unauthorized access.');
+        }
+    }
+
     public function index()
     {
-        $coupons = Coupon::latest()->get()->map(function ($coupon) {
-            $coupon->status_label = $coupon->status;
-            return $coupon;
-        });
+        $this->authorizeStaff();
+        $garageId = Garage::getActiveGarageId();
+
+        $coupons = Coupon::where('garage_id', $garageId)
+            ->latest()
+            ->get()
+            ->map(function ($coupon) {
+                $coupon->status_label = $coupon->status;
+                return $coupon;
+            });
 
         return Inertia::render('Coupons/Index', [
             'coupons' => $coupons
@@ -23,6 +37,8 @@ class CouponController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorizeStaff();
+
         $request->validate([
             'code' => 'required|string|max:50',
             'discount_type' => 'required|in:fixed,percentage',
@@ -31,7 +47,7 @@ class CouponController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        $garageId = \App\Models\Garage::getActiveGarageId();
+        $garageId = Garage::getActiveGarageId();
 
         // Check if code exists in this garage
         if (Coupon::where('garage_id', $garageId)->where('code', strtoupper($request->code))->exists()) {
@@ -52,8 +68,10 @@ class CouponController extends Controller
 
     public function update(Request $request, Coupon $coupon)
     {
-        if ((int) $coupon->garage_id !== (int) \App\Models\Garage::getActiveGarageId()) {
-            abort(403);
+        $this->authorizeStaff();
+
+        if (auth()->user()->role !== 'super_admin' && (int) $coupon->garage_id !== (int) Garage::getActiveGarageId()) {
+            abort(403, 'Unauthorized access.');
         }
 
         $request->validate([
@@ -75,8 +93,10 @@ class CouponController extends Controller
 
     public function destroy(Coupon $coupon)
     {
-        if ((int) $coupon->garage_id !== (int) \App\Models\Garage::getActiveGarageId()) {
-            abort(403);
+        $this->authorizeStaff();
+
+        if (auth()->user()->role !== 'super_admin' && (int) $coupon->garage_id !== (int) Garage::getActiveGarageId()) {
+            abort(403, 'Unauthorized access.');
         }
 
         $coupon->delete();
@@ -90,7 +110,7 @@ class CouponController extends Controller
             'subtotal' => 'required|numeric|min:0'
         ]);
 
-        $garageId = \App\Models\Garage::getActiveGarageId();
+        $garageId = Garage::getActiveGarageId();
         
         $coupon = Coupon::where('garage_id', $garageId)
             ->where('code', strtoupper($request->code))
@@ -116,8 +136,10 @@ class CouponController extends Controller
 
     public function toggleActive(Coupon $coupon)
     {
-        if ((int) $coupon->garage_id !== (int) \App\Models\Garage::getActiveGarageId()) {
-            abort(403);
+        $this->authorizeStaff();
+
+        if (auth()->user()->role !== 'super_admin' && (int) $coupon->garage_id !== (int) Garage::getActiveGarageId()) {
+            abort(403, 'Unauthorized access.');
         }
 
         $coupon->update([

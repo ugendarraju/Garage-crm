@@ -19,6 +19,13 @@ class InstallController extends Controller
             return redirect('/');
         }
 
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('users') && \App\Models\User::count() > 0) {
+                @file_put_contents(storage_path('installed'), 'installed');
+                return redirect('/');
+            }
+        } catch (\Throwable $e) {}
+
         $requirements = [
             'PHP >= 8.2' => version_compare(PHP_VERSION, '8.2.0', '>='),
             'PDO Extension' => extension_loaded('pdo'),
@@ -46,6 +53,13 @@ class InstallController extends Controller
         if (file_exists(storage_path('installed'))) {
             return redirect('/');
         }
+
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('users') && \App\Models\User::count() > 0) {
+                @file_put_contents(storage_path('installed'), 'installed');
+                return redirect('/');
+            }
+        } catch (\Throwable $e) {}
 
         $request->validate([
             'db_host' => 'required|string',

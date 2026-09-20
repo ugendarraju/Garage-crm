@@ -10,18 +10,28 @@ trait BelongsToGarage
     {
         static::addGlobalScope('garage', function (Builder $builder) {
             $garageId = self::getActiveGarageId();
+            $model = $builder->getModel();
+            $allowsGlobal = method_exists($model, 'allowsGlobalGarage') && $model->allowsGlobalGarage();
             
             if ($garageId) {
-                $builder->where(function ($query) use ($garageId) {
-                    $query->where('garage_id', $garageId)
-                          ->orWhereNull('garage_id');
-                });
+                if ($allowsGlobal) {
+                    $builder->where(function ($query) use ($garageId) {
+                        $query->where('garage_id', $garageId)
+                              ->orWhereNull('garage_id');
+                    });
+                } else {
+                    $builder->where('garage_id', $garageId);
+                }
+            } elseif (auth()->check() && auth()->user()->role !== 'super_admin') {
+                if (!$allowsGlobal) {
+                    $builder->whereRaw('1 = 0');
+                }
             }
         });
 
         static::creating(function ($model) {
             $garageId = self::getActiveGarageId();
-            if ($garageId) {
+            if ($garageId && empty($model->garage_id)) {
                 $model->garage_id = $garageId;
             }
         });

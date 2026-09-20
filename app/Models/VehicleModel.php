@@ -14,4 +14,9 @@ class VehicleModel extends Model
     {
         return $this->belongsTo(VehicleBrand::class, 'brand_id');
     }
+
+    public function allowsGlobalGarage(): bool
+    {
+        return true;
+    }
 }

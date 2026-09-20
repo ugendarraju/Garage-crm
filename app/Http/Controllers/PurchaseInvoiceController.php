@@ -6,15 +6,30 @@ use App\Models\PurchaseInvoice;
 use App\Models\PurchaseInvoiceItem;
 use App\Models\Supplier;
 use App\Models\Inventory;
+use App\Models\Garage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 
 class PurchaseInvoiceController extends Controller
 {
+    private function authorizeStaff(): void
+    {
+        if (!auth()->check() || auth()->user()->role === 'customer') {
+            abort(403, 'Unauthorized access.');
+        }
+    }
+
     public function index()
     {
-        $invoices = PurchaseInvoice::with('supplier')->orderBy('purchase_date', 'desc')->get();
+        $this->authorizeStaff();
+        $garageId = Garage::getActiveGarageId();
+
+        $invoices = PurchaseInvoice::where('garage_id', $garageId)
+            ->with('supplier')
+            ->orderBy('purchase_date', 'desc')
+            ->get();
+
         return Inertia::render('Purchases/Index', [
             'invoices' => $invoices
         ]);
@@ -22,8 +37,11 @@ class PurchaseInvoiceController extends Controller
 
     public function create()
     {
-        $suppliers = Supplier::orderBy('name')->get();
-        $inventoryItems = Inventory::orderBy('part_name')->get();
+        $this->authorizeStaff();
+        $garageId = Garage::getActiveGarageId();
+
+        $suppliers = Supplier::where('garage_id', $garageId)->orderBy('name')->get();
+        $inventoryItems = Inventory::where('garage_id', $garageId)->orderBy('part_name')->get();
 
         return Inertia::render('Purchases/Create', [
             'suppliers' => $suppliers,
@@ -33,6 +51,9 @@ class PurchaseInvoiceController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorizeStaff();
+        $garageId = Garage::getActiveGarageId();
+
         $validated = $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
             'invoice_number' => 'required|string|max:255',
@@ -52,6 +73,11 @@ class PurchaseInvoiceController extends Controller
             'payment_receipt' => 'nullable|image|max:5120', // max 5MB
         ]);
 
+        // Cross-tenant verification: verify supplier belongs to active garage
+        if (auth()->user()->role !== 'super_admin') {
+            Supplier::where('id', $validated['supplier_id'])->where('garage_id', $garageId)->firstOrFail();
+        }
+
         $billImagePath = null;
         if ($request->hasFile('bill_image')) {
             $billImagePath = $request->file('bill_image')->store('invoices', 'public');
@@ -62,9 +88,9 @@ class PurchaseInvoiceController extends Controller
             $paymentReceiptPath = $request->file('payment_receipt')->store('receipts', 'public');
         }
 
-        DB::transaction(function () use ($validated, $billImagePath, $paymentReceiptPath) {
+        DB::transaction(function () use ($validated, $billImagePath, $paymentReceiptPath, $garageId) {
             $invoice = PurchaseInvoice::create([
-                'garage_id' => Garage::getActiveGarageId(),
+                'garage_id' => $garageId,
                 'supplier_id' => $validated['supplier_id'],
                 'invoice_number' => $validated['invoice_number'],
                 'purchase_date' => $validated['purchase_date'],
@@ -80,9 +106,14 @@ class PurchaseInvoiceController extends Controller
                 $inventoryId = $itemData['inventory_id'] ?? null;
                 $partName = $itemData['part_name'] ?? '';
 
+                if ($inventoryId && auth()->user()->role !== 'super_admin') {
+                    Inventory::where('id', $inventoryId)->where('garage_id', $garageId)->firstOrFail();
+                }
+
                 if (!$inventoryId && $partName) {
-                    // Create new inventory item
+                    // Create new inventory item scoped to garage
                     $newInventory = Inventory::create([
+                        'garage_id' => $garageId,
                         'part_name' => $partName,
                         'current_stock' => 0,
                         'current_price' => $itemData['unit_price'],
@@ -96,7 +127,7 @@ class PurchaseInvoiceController extends Controller
                 PurchaseInvoiceItem::create([
                     'purchase_invoice_id' => $invoice->id,
                     'inventory_id' => $inventoryId,
-                    'part_name' => $partName ?: Inventory::find($inventoryId)->part_name,
+                    'part_name' => $partName ?: ($inventoryId ? Inventory::find($inventoryId)->part_name : 'Item'),
                     'quantity' => $itemData['quantity'],
                     'unit_price' => $itemData['unit_price'],
                     'gst_percent' => !empty($itemData['apply_gst']) ? ($itemData['gst_percent'] ?? null) : null,
@@ -106,18 +137,21 @@ class PurchaseInvoiceController extends Controller
                 // Update inventory stock
                 if ($inventoryId) {
                     $inv = Inventory::find($inventoryId);
-                    $inv->current_stock += $itemData['quantity'];
-                    // Optionally update price if it's new stock
-                    $inv->current_price = $itemData['unit_price'];
-                    $inv->save();
+                    if ($inv) {
+                        $inv->current_stock += $itemData['quantity'];
+                        $inv->current_price = $itemData['unit_price'];
+                        $inv->save();
+                    }
                 }
             }
 
             // Update supplier balance if unpaid or partial
             if ($validated['status'] !== 'paid') {
                 $supplier = Supplier::find($validated['supplier_id']);
-                $supplier->balance += $validated['total_amount'];
-                $supplier->save();
+                if ($supplier) {
+                    $supplier->balance += $validated['total_amount'];
+                    $supplier->save();
+                }
             }
         });
 
@@ -126,9 +160,15 @@ class PurchaseInvoiceController extends Controller
 
     public function edit(PurchaseInvoice $purchase)
     {
+        $this->authorizeStaff();
+        $garageId = Garage::getActiveGarageId();
+        if (auth()->user()->role !== 'super_admin' && (int) $purchase->garage_id !== (int) $garageId) {
+            abort(403, 'Unauthorized access.');
+        }
+
         $purchase->load(['supplier', 'items']);
-        $suppliers = Supplier::orderBy('name')->get();
-        $inventoryItems = Inventory::orderBy('part_name')->get();
+        $suppliers = Supplier::where('garage_id', $garageId)->orderBy('name')->get();
+        $inventoryItems = Inventory::where('garage_id', $garageId)->orderBy('part_name')->get();
 
         return Inertia::render('Purchases/Edit', [
             'invoice' => $purchase,
@@ -139,8 +179,14 @@ class PurchaseInvoiceController extends Controller
 
     public function update(Request $request, PurchaseInvoice $purchase)
     {
+        $this->authorizeStaff();
+        $garageId = Garage::getActiveGarageId();
+        if (auth()->user()->role !== 'super_admin' && (int) $purchase->garage_id !== (int) $garageId) {
+            abort(403, 'Unauthorized access.');
+        }
+
         $validated = $request->validate([
-            'invoice_number' => 'required|string|max:255|unique:purchase_invoices,invoice_number,' . $purchase->id,
+            'invoice_number' => 'required|string|max:255|unique:purchase_invoices,invoice_number,' . $purchase->id . ',id,garage_id,' . $garageId,
             'supplier_id' => 'required|exists:suppliers,id',
             'purchase_date' => 'required|date',
             'status' => 'required|in:paid,unpaid,partial',
@@ -158,6 +204,10 @@ class PurchaseInvoiceController extends Controller
             'payment_receipt' => 'nullable|image|max:5120',
         ]);
 
+        if (auth()->user()->role !== 'super_admin') {
+            Supplier::where('id', $validated['supplier_id'])->where('garage_id', $garageId)->firstOrFail();
+        }
+
         $oldStatus = $purchase->status;
         $newStatus = $validated['status'];
         $oldTotal = $purchase->total_amount;
@@ -173,12 +223,14 @@ class PurchaseInvoiceController extends Controller
             $paymentReceiptPath = $request->file('payment_receipt')->store('receipts', 'public');
         }
 
-        DB::transaction(function () use ($purchase, $oldStatus, $newStatus, $oldTotal, $newTotal, $validated, $billImagePath, $paymentReceiptPath) {
+        DB::transaction(function () use ($purchase, $oldStatus, $newStatus, $oldTotal, $newTotal, $validated, $billImagePath, $paymentReceiptPath, $garageId) {
             // Revert old invoice effects
             if ($oldStatus !== 'paid') {
                 $supplier = Supplier::find($purchase->supplier_id);
-                $supplier->balance -= $oldTotal;
-                $supplier->save();
+                if ($supplier) {
+                    $supplier->balance -= $oldTotal;
+                    $supplier->save();
+                }
             }
 
             // Revert inventory from old items
@@ -212,8 +264,13 @@ class PurchaseInvoiceController extends Controller
                 $inventoryId = $itemData['inventory_id'] ?? null;
                 $partName = $itemData['part_name'] ?? '';
 
+                if ($inventoryId && auth()->user()->role !== 'super_admin') {
+                    Inventory::where('id', $inventoryId)->where('garage_id', $garageId)->firstOrFail();
+                }
+
                 if (!$inventoryId && $partName) {
                     $newInventory = Inventory::create([
+                        'garage_id' => $garageId,
                         'part_name' => $partName,
                         'current_stock' => 0,
                         'current_price' => $itemData['unit_price'],
@@ -226,7 +283,7 @@ class PurchaseInvoiceController extends Controller
                 PurchaseInvoiceItem::create([
                     'purchase_invoice_id' => $purchase->id,
                     'inventory_id' => $inventoryId,
-                    'part_name' => $partName ?: Inventory::find($inventoryId)->part_name,
+                    'part_name' => $partName ?: ($inventoryId ? Inventory::find($inventoryId)->part_name : 'Item'),
                     'quantity' => $itemData['quantity'],
                     'unit_price' => $itemData['unit_price'],
                     'gst_percent' => !empty($itemData['apply_gst']) ? ($itemData['gst_percent'] ?? null) : null,
@@ -235,17 +292,21 @@ class PurchaseInvoiceController extends Controller
 
                 if ($inventoryId) {
                     $inv = Inventory::find($inventoryId);
-                    $inv->current_stock += $itemData['quantity'];
-                    $inv->current_price = $itemData['unit_price'];
-                    $inv->save();
+                    if ($inv) {
+                        $inv->current_stock += $itemData['quantity'];
+                        $inv->current_price = $itemData['unit_price'];
+                        $inv->save();
+                    }
                 }
             }
 
             // Apply new invoice effects
             if ($newStatus !== 'paid') {
                 $supplier = Supplier::find($purchase->supplier_id);
-                $supplier->balance += $newTotal;
-                $supplier->save();
+                if ($supplier) {
+                    $supplier->balance += $newTotal;
+                    $supplier->save();
+                }
             }
         });
 

@@ -15,6 +15,21 @@ class CheckInstallation
     {
         $isInstalled = file_exists(storage_path('installed'));
 
+        // If lock file is missing but database already has users/garages, permanently seal it
+        if (!$isInstalled) {
+            try {
+                if (\Illuminate\Support\Facades\Schema::hasTable('users') && \App\Models\User::count() > 0) {
+                    @file_put_contents(storage_path('installed'), json_encode([
+                        'sealed_at' => now()->toIso8601String(),
+                        'auto_sealed' => true,
+                    ]));
+                    $isInstalled = true;
+                }
+            } catch (\Throwable $e) {
+                // Database not yet configured or reachable
+            }
+        }
+
         // If not installed and trying to visit application pages, redirect to installer
         if (!$isInstalled) {
             if (!$request->is('install*') && !$request->is('up') && !$request->is('build*') && !$request->is('favicon*')) {
@@ -22,7 +37,7 @@ class CheckInstallation
             }
         }
 
-        // If already installed, block access to installer
+        // If already installed, block access to installer completely
         if ($isInstalled && $request->is('install*')) {
             return redirect('/');
         }

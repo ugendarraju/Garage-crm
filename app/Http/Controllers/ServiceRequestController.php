@@ -81,10 +81,20 @@ class ServiceRequestController extends Controller
         return redirect()->back()->with('success', 'Your service request has been submitted successfully! We will contact you soon.');
     }
 
+    private function authorizeStaff(): void
+    {
+        if (!auth()->check() || auth()->user()->role === 'customer') {
+            abort(403, 'Unauthorized access.');
+        }
+    }
+
     // Admin: List all requests
     public function index()
     {
-        $requests = ServiceRequest::orderBy('created_at', 'desc')->get();
+        $this->authorizeStaff();
+        $garageId = \App\Models\Garage::getActiveGarageId();
+
+        $requests = ServiceRequest::where('garage_id', $garageId)->orderBy('created_at', 'desc')->get();
         return Inertia::render('ServiceRequests/Index', [
             'serviceRequests' => $requests
         ]);
@@ -93,8 +103,14 @@ class ServiceRequestController extends Controller
     // Admin: Approve a request
     public function approve($id)
     {
+        $this->authorizeStaff();
+        $garageId = \App\Models\Garage::getActiveGarageId();
         $serviceRequest = ServiceRequest::findOrFail($id);
         
+        if (auth()->user()->role !== 'super_admin' && (int) $serviceRequest->garage_id !== (int) $garageId) {
+            abort(403, 'Unauthorized access.');
+        }
+
         // If already approved, do nothing
         if ($serviceRequest->status === 'approved') {
             return redirect()->back()->with('success', 'Request is already approved.');
@@ -105,7 +121,7 @@ class ServiceRequestController extends Controller
         // Check if user already exists
         $user = \App\Models\User::where('email', $serviceRequest->email)->first();
         
-        $garageId = clone (\App\Models\Garage::getActiveGarageId() ?: $serviceRequest->garage_id);
+        $garageId = clone ($garageId ?: $serviceRequest->garage_id);
 
         if (!$user) {
             // New user workflow
@@ -191,7 +207,14 @@ class ServiceRequestController extends Controller
     // Admin: Decline a request
     public function decline($id)
     {
+        $this->authorizeStaff();
+        $garageId = \App\Models\Garage::getActiveGarageId();
         $serviceRequest = ServiceRequest::findOrFail($id);
+
+        if (auth()->user()->role !== 'super_admin' && (int) $serviceRequest->garage_id !== (int) $garageId) {
+            abort(403, 'Unauthorized access.');
+        }
+
         $serviceRequest->update(['status' => 'declined']);
 
         return redirect()->back()->with('success', 'Request declined.');

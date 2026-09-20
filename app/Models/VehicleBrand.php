@@ -13,4 +13,9 @@ class VehicleBrand extends Model
     {
         return $this->hasMany(VehicleModel::class, 'brand_id');
     }
+
+    public function allowsGlobalGarage(): bool
+    {
+        return true;
+    }
 }

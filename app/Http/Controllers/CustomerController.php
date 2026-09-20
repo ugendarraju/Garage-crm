@@ -10,11 +10,24 @@ use Inertia\Inertia;
 
 class CustomerController extends Controller
 {
+    private function authorizeStaffOrOwner(): void
+    {
+        if (!auth()->check() || auth()->user()->role === 'customer') {
+            abort(403, 'Unauthorized access.');
+        }
+    }
+
     public function index()
     {
+        $this->authorizeStaffOrOwner();
+
         $garageId = \App\Models\Garage::getActiveGarageId();
         
-        $customers = Customer::with(['user', 'vehicles', 'jobCards.vehicle.brand', 'jobCards.vehicle.vehicleModel'])->withCount('jobCards')->latest()->get();
+        $customers = Customer::where('garage_id', $garageId)
+            ->with(['user', 'vehicles', 'jobCards.vehicle.brand', 'jobCards.vehicle.vehicleModel'])
+            ->withCount('jobCards')
+            ->latest()
+            ->get();
         
         $brands = \App\Models\VehicleBrand::where(function($query) use ($garageId) {
             $query->where('garage_id', $garageId)->orWhereNull('garage_id');
@@ -33,6 +46,10 @@ class CustomerController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorizeStaffOrOwner();
+
+        $garageId = \App\Models\Garage::getActiveGarageId();
+
         $existingUser = User::where('phone', $request->phone)->first();
         $userId = $existingUser ? $existingUser->id : null;
 
@@ -61,7 +78,7 @@ class CustomerController extends Controller
         );
 
         $customer = Customer::firstOrCreate(
-            ['user_id' => $user->id],
+            ['user_id' => $user->id, 'garage_id' => $garageId],
             [
                 'address' => $validated['address'],
                 'gst_number' => $validated['gst_number'],
@@ -87,6 +104,13 @@ class CustomerController extends Controller
 
     public function update(Request $request, Customer $customer)
     {
+        $this->authorizeStaffOrOwner();
+
+        $garageId = \App\Models\Garage::getActiveGarageId();
+        if ((int) $customer->garage_id !== (int) $garageId) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $userId = $customer->user_id;
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -154,6 +178,13 @@ class CustomerController extends Controller
 
     public function destroy(Customer $customer)
     {
+        $this->authorizeStaffOrOwner();
+
+        $garageId = \App\Models\Garage::getActiveGarageId();
+        if ((int) $customer->garage_id !== (int) $garageId) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $userId = $customer->user_id;
         $customer->delete();
         User::find($userId)?->delete();
@@ -163,8 +194,11 @@ class CustomerController extends Controller
 
     public function resetPassword(Customer $customer)
     {
-        if ($customer->garage_id !== \App\Models\Garage::getActiveGarageId()) {
-            abort(403);
+        $this->authorizeStaffOrOwner();
+
+        $garageId = \App\Models\Garage::getActiveGarageId();
+        if ((int) $customer->garage_id !== (int) $garageId) {
+            abort(403, 'Unauthorized action.');
         }
 
         $customer->user->update([

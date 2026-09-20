@@ -11,14 +11,25 @@ use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Validator;
 use App\Models\PartCategory;
 use App\Models\PartBrand;
+use App\Models\Garage;
 
 class InventoryController extends Controller
 {
+    private function authorizeStaff(): void
+    {
+        if (!auth()->check() || auth()->user()->role === 'customer') {
+            abort(403, 'Unauthorized access.');
+        }
+    }
+
     public function index()
     {
-        $inventory = Inventory::orderBy('part_name')->get();
-        $categories = PartCategory::orderBy('name')->get();
-        $brands = PartBrand::orderBy('name')->get();
+        $this->authorizeStaff();
+        $garageId = Garage::getActiveGarageId();
+
+        $inventory = Inventory::where('garage_id', $garageId)->orderBy('part_name')->get();
+        $categories = PartCategory::where('garage_id', $garageId)->orderBy('name')->get();
+        $brands = PartBrand::where('garage_id', $garageId)->orderBy('name')->get();
         
         return Inertia::render('Inventory/Index', [
             'inventory' => $inventory,
@@ -29,14 +40,18 @@ class InventoryController extends Controller
 
     public function create()
     {
+        $this->authorizeStaff();
         return Inertia::render('Inventory/Create');
     }
 
     public function store(StoreInventoryRequest $request)
     {
+        $this->authorizeStaff();
+        $garageId = Garage::getActiveGarageId();
+
         $validated = $request->validate([
             'part_name' => 'required|string|max:255',
-            'part_code' => 'nullable|string|max:100|unique:inventories,part_code',
+            'part_code' => 'nullable|string|max:100|unique:inventories,part_code,NULL,id,garage_id,' . $garageId,
             'category' => 'nullable|string|max:100',
             'brand' => 'nullable|string|max:100',
             'current_stock' => 'required|integer|min:0',
@@ -47,6 +62,8 @@ class InventoryController extends Controller
             'location' => 'nullable|string|max:100',
         ]);
 
+        $validated['garage_id'] = $garageId;
+
         Inventory::create($validated);
 
         return redirect()->route('inventory.index')->with('success', 'Item added to inventory.');
@@ -54,6 +71,12 @@ class InventoryController extends Controller
 
     public function show(Inventory $inventory)
     {
+        $this->authorizeStaff();
+        $garageId = Garage::getActiveGarageId();
+        if (auth()->user()->role !== 'super_admin' && (int) $inventory->garage_id !== (int) $garageId) {
+            abort(403, 'Unauthorized access.');
+        }
+
         return Inertia::render('Inventory/Show', [
             'item' => $inventory
         ]);
@@ -61,6 +84,12 @@ class InventoryController extends Controller
 
     public function edit(Inventory $inventory)
     {
+        $this->authorizeStaff();
+        $garageId = Garage::getActiveGarageId();
+        if (auth()->user()->role !== 'super_admin' && (int) $inventory->garage_id !== (int) $garageId) {
+            abort(403, 'Unauthorized access.');
+        }
+
         return Inertia::render('Inventory/Edit', [
             'item' => $inventory
         ]);
@@ -68,9 +97,15 @@ class InventoryController extends Controller
 
     public function update(UpdateInventoryRequest $request, Inventory $inventory)
     {
+        $this->authorizeStaff();
+        $garageId = Garage::getActiveGarageId();
+        if (auth()->user()->role !== 'super_admin' && (int) $inventory->garage_id !== (int) $garageId) {
+            abort(403, 'Unauthorized access.');
+        }
+
         $validated = $request->validate([
             'part_name' => 'required|string|max:255',
-            'part_code' => 'nullable|string|max:100|unique:inventories,part_code,'.$inventory->id,
+            'part_code' => 'nullable|string|max:100|unique:inventories,part_code,'.$inventory->id.',id,garage_id,'.$garageId,
             'category' => 'nullable|string|max:100',
             'brand' => 'nullable|string|max:100',
             'current_stock' => 'required|integer|min:0',
@@ -88,13 +123,22 @@ class InventoryController extends Controller
 
     public function destroy(Inventory $inventory)
     {
+        $this->authorizeStaff();
+        $garageId = Garage::getActiveGarageId();
+        if (auth()->user()->role !== 'super_admin' && (int) $inventory->garage_id !== (int) $garageId) {
+            abort(403, 'Unauthorized access.');
+        }
+
         $inventory->delete();
         return redirect()->back()->with('success', 'Item deleted successfully.');
     }
 
     public function export()
     {
-        $inventory = Inventory::all();
+        $this->authorizeStaff();
+        $garageId = Garage::getActiveGarageId();
+
+        $inventory = Inventory::where('garage_id', $garageId)->orderBy('part_name')->get();
         
         $csvHeader = ['ID', 'Part Name', 'Part Code', 'Category', 'Current Stock', 'Min Stock Level', 'Current Price', 'Location'];
         
@@ -125,6 +169,9 @@ class InventoryController extends Controller
 
     public function bulkImport(Request $request)
     {
+        $this->authorizeStaff();
+        $garageId = Garage::getActiveGarageId();
+
         $request->validate([
             'file' => 'required|mimes:csv,txt|max:2048'
         ]);
@@ -136,10 +183,12 @@ class InventoryController extends Controller
         $importedCount = 0;
         while (($row = fgetcsv($fileStream)) !== false) {
             // Basic mapping assuming standard header (Part Name, Part Code, Category, Stock, Min Stock, Price, Location)
-            // Adjust indexes based on actual CSV format expected
             if (count($row) >= 6) {
                 Inventory::updateOrCreate(
-                    ['part_code' => $row[1]], // Assuming Part Code is unique
+                    [
+                        'part_code' => $row[1],
+                        'garage_id' => $garageId,
+                    ],
                     [
                         'part_name' => $row[0],
                         'category' => $row[2],
@@ -147,6 +196,7 @@ class InventoryController extends Controller
                         'min_stock_level' => (float)$row[4],
                         'current_price' => (float)$row[5],
                         'location' => $row[6] ?? null,
+                        'garage_id' => $garageId,
                     ]
                 );
                 $importedCount++;

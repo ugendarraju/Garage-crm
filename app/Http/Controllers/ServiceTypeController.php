@@ -3,14 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Models\ServiceType;
+use App\Models\Garage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ServiceTypeController extends Controller
 {
+    private function authorizeStaff(): void
+    {
+        if (!auth()->check() || auth()->user()->role === 'customer') {
+            abort(403, 'Unauthorized access.');
+        }
+    }
+
     public function index()
     {
-        $serviceTypes = ServiceType::where('garage_id', \App\Models\Garage::getActiveGarageId())
+        $this->authorizeStaff();
+        $serviceTypes = ServiceType::where('garage_id', Garage::getActiveGarageId())
             ->latest()
             ->get();
 
@@ -21,6 +30,8 @@ class ServiceTypeController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorizeStaff();
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -28,7 +39,7 @@ class ServiceTypeController extends Controller
         ]);
 
         ServiceType::create([
-            'garage_id' => \App\Models\Garage::getActiveGarageId(),
+            'garage_id' => Garage::getActiveGarageId(),
             'name' => $validated['name'],
             'description' => $validated['description'],
             'is_active' => $validated['is_active'] ?? true,
@@ -39,8 +50,10 @@ class ServiceTypeController extends Controller
 
     public function update(Request $request, ServiceType $serviceType)
     {
-        if ($serviceType->garage_id !== \App\Models\Garage::getActiveGarageId()) {
-            abort(403);
+        $this->authorizeStaff();
+
+        if (auth()->user()->role !== 'super_admin' && (int) $serviceType->garage_id !== (int) Garage::getActiveGarageId()) {
+            abort(403, 'Unauthorized access.');
         }
 
         $validated = $request->validate([
@@ -56,8 +69,10 @@ class ServiceTypeController extends Controller
 
     public function toggleActive(ServiceType $serviceType)
     {
-        if ($serviceType->garage_id !== \App\Models\Garage::getActiveGarageId()) {
-            abort(403);
+        $this->authorizeStaff();
+
+        if (auth()->user()->role !== 'super_admin' && (int) $serviceType->garage_id !== (int) Garage::getActiveGarageId()) {
+            abort(403, 'Unauthorized access.');
         }
 
         $serviceType->update(['is_active' => !$serviceType->is_active]);
@@ -67,8 +82,10 @@ class ServiceTypeController extends Controller
 
     public function destroy(ServiceType $serviceType)
     {
-        if ($serviceType->garage_id !== \App\Models\Garage::getActiveGarageId()) {
-            abort(403);
+        $this->authorizeStaff();
+
+        if (auth()->user()->role !== 'super_admin' && (int) $serviceType->garage_id !== (int) Garage::getActiveGarageId()) {
+            abort(403, 'Unauthorized access.');
         }
 
         $serviceType->delete();

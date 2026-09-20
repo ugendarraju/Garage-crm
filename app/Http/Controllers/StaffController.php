@@ -10,8 +10,17 @@ use Illuminate\Validation\Rule;
 
 class StaffController extends Controller
 {
+    private function authorizeStaffManager(): void
+    {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['owner', 'super_admin'])) {
+            abort(403, 'Unauthorized access.');
+        }
+    }
+
     public function index()
     {
+        $this->authorizeStaffManager();
+
         $staff = User::whereIn('role', ['mechanic', 'manager'])
             ->where('garage_id', \App\Models\Garage::getActiveGarageId())
             ->latest()
@@ -24,6 +33,8 @@ class StaffController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorizeStaffManager();
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'phone' => 'required|string|max:20|unique:users',
@@ -47,6 +58,8 @@ class StaffController extends Controller
 
     public function update(Request $request, User $staff)
     {
+        $this->authorizeStaffManager();
+
         // Ensure staff belongs to active garage
         if ($staff->garage_id !== \App\Models\Garage::getActiveGarageId()) {
             abort(403);
@@ -78,6 +91,8 @@ class StaffController extends Controller
 
     public function toggleActive(User $staff)
     {
+        $this->authorizeStaffManager();
+
         if ($staff->garage_id !== \App\Models\Garage::getActiveGarageId()) {
             abort(403);
         }
@@ -89,6 +104,8 @@ class StaffController extends Controller
 
     public function destroy(User $staff)
     {
+        $this->authorizeStaffManager();
+
         if ($staff->garage_id !== \App\Models\Garage::getActiveGarageId()) {
             abort(403);
         }

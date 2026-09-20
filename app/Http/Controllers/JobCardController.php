@@ -36,10 +36,14 @@ class JobCardController extends Controller
 
     public function create()
     {
+        if (!auth()->check() || auth()->user()->role === 'customer') {
+            abort(403, 'Unauthorized access.');
+        }
+
         $garageId = \App\Models\Garage::getActiveGarageId();
         
         return Inertia::render('JobCards/Create', [
-            'customers' => Customer::with('user', 'vehicles')->get(),
+            'customers' => Customer::where('garage_id', $garageId)->with('user', 'vehicles')->get(),
             'mechanics' => User::where('garage_id', $garageId)
                                ->whereIn('role', ['mechanic', 'manager'])
                                ->where('is_active', true)->get(),
@@ -51,12 +55,16 @@ class JobCardController extends Controller
             'models' => \App\Models\VehicleModel::where(function($query) use ($garageId) {
                                $query->where('garage_id', $garageId)->orWhereNull('garage_id');
                            })->with('brand')->get(),
-            'inventoryItems' => \App\Models\Inventory::orderBy('part_name')->get(),
+            'inventoryItems' => \App\Models\Inventory::where('garage_id', $garageId)->orderBy('part_name')->get(),
         ]);
     }
 
     public function store(Request $request)
     {
+        if (!auth()->check() || auth()->user()->role === 'customer') {
+            abort(403, 'Unauthorized access.');
+        }
+
         $garageId = \App\Models\Garage::getActiveGarageId();
 
         $validated = $request->validate([
@@ -236,12 +244,12 @@ class JobCardController extends Controller
     public function show(JobCard $jobCard)
     {
         if (auth()->user()->role === 'customer') {
-            if (!$jobCard->customer_id || auth()->user()->customerProfile->id !== $jobCard->customer_id) {
-                abort(403);
+            if (!$jobCard->customer_id || auth()->user()->customerProfile?->id !== $jobCard->customer_id) {
+                abort(403, 'Unauthorized access.');
             }
         } else {
-            if ((int) $jobCard->garage_id !== (int) \App\Models\Garage::getActiveGarageId()) {
-                abort(403);
+            if (auth()->user()->role !== 'super_admin' && (int) $jobCard->garage_id !== (int) \App\Models\Garage::getActiveGarageId()) {
+                abort(403, 'Unauthorized access.');
             }
         }
 
@@ -253,13 +261,14 @@ class JobCardController extends Controller
 
     public function edit(JobCard $jobCard)
     {
-        if (auth()->user()->role === 'customer') {
-            if (!$jobCard->customer_id || auth()->user()->customerProfile->id !== $jobCard->customer_id) {
-                abort(403);
+        $isCustomer = auth()->user()->role === 'customer';
+        if ($isCustomer) {
+            if (!$jobCard->customer_id || auth()->user()->customerProfile?->id !== $jobCard->customer_id) {
+                abort(403, 'Unauthorized access.');
             }
         } else {
-            if ((int) $jobCard->garage_id !== (int) \App\Models\Garage::getActiveGarageId()) {
-                abort(403);
+            if (auth()->user()->role !== 'super_admin' && (int) $jobCard->garage_id !== (int) \App\Models\Garage::getActiveGarageId()) {
+                abort(403, 'Unauthorized access.');
             }
         }
 
@@ -268,27 +277,65 @@ class JobCardController extends Controller
 
         return Inertia::render('JobCards/Edit', [
             'jobCard' => $jobCard,
-            'customers' => Customer::with('user', 'vehicles')->get(),
-            'mechanics' => User::where('garage_id', $garageId)
+            'customers' => $isCustomer ? [] : Customer::where('garage_id', $garageId)->with('user', 'vehicles')->get(),
+            'mechanics' => $isCustomer ? [] : User::where('garage_id', $garageId)
                                ->whereIn('role', ['mechanic', 'manager'])
                                ->where('is_active', true)->get(),
-            'serviceTypes' => \App\Models\ServiceType::where('garage_id', $garageId)
+            'serviceTypes' => $isCustomer ? [] : \App\Models\ServiceType::where('garage_id', $garageId)
                                ->where('is_active', true)->get(),
-            'brands' => \App\Models\VehicleBrand::where(function($query) use ($garageId) {
+            'brands' => $isCustomer ? [] : \App\Models\VehicleBrand::where(function($query) use ($garageId) {
                                $query->where('garage_id', $garageId)->orWhereNull('garage_id');
                            })->get(),
-            'models' => \App\Models\VehicleModel::where(function($query) use ($garageId) {
+            'models' => $isCustomer ? [] : \App\Models\VehicleModel::where(function($query) use ($garageId) {
                                $query->where('garage_id', $garageId)->orWhereNull('garage_id');
                            })->with('brand')->get(),
-            'inventoryItems' => \App\Models\Inventory::orderBy('part_name')->get(),
+            'inventoryItems' => $isCustomer ? [] : \App\Models\Inventory::where('garage_id', $garageId)->orderBy('part_name')->get(),
         ]);
     }
 
     public function update(Request $request, JobCard $jobCard)
     {
         $garageId = \App\Models\Garage::getActiveGarageId();
-        if ((int) $jobCard->garage_id !== (int) $garageId) {
-            abort(403);
+        $isCustomer = auth()->user()->role === 'customer';
+
+        if ($isCustomer) {
+            if (!$jobCard->customer_id || auth()->user()->customerProfile?->id !== $jobCard->customer_id) {
+                abort(403, 'Unauthorized access.');
+            }
+
+            // Customers may ONLY update issue notes and consent statuses
+            $validated = $request->validate([
+                'customer_issues' => 'nullable|array',
+                'customer_issues.*.id' => 'nullable|integer',
+                'customer_issues.*.consent_status' => 'nullable|in:pending,approved,denied',
+                'customer_issues.*.customer_notes' => 'nullable|string',
+            ]);
+
+            if (!empty($validated['customer_issues'])) {
+                foreach ($validated['customer_issues'] as $issueData) {
+                    if (!empty($issueData['id'])) {
+                        $issue = $jobCard->issues()->where('id', $issueData['id'])->first();
+                        if ($issue) {
+                            $updateData = [];
+                            if (array_key_exists('consent_status', $issueData)) {
+                                $updateData['consent_status'] = $issueData['consent_status'];
+                            }
+                            if (array_key_exists('customer_notes', $issueData)) {
+                                $updateData['customer_notes'] = $issueData['customer_notes'];
+                            }
+                            if (!empty($updateData)) {
+                                $issue->update($updateData);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return redirect()->route('job-cards.index')->with(['success' => 'Job Card updated.']);
+        }
+
+        if (auth()->user()->role !== 'super_admin' && (int) $jobCard->garage_id !== (int) $garageId) {
+            abort(403, 'Unauthorized access.');
         }
 
         \Log::info('JobCard update request: ', $request->all());
@@ -414,8 +461,12 @@ class JobCardController extends Controller
 
     public function destroy(JobCard $jobCard)
     {
-        if ((int) $jobCard->garage_id !== (int) \App\Models\Garage::getActiveGarageId()) {
-            abort(403);
+        if (auth()->user()->role === 'customer') {
+            abort(403, 'Unauthorized access.');
+        }
+
+        if (auth()->user()->role !== 'super_admin' && (int) $jobCard->garage_id !== (int) \App\Models\Garage::getActiveGarageId()) {
+            abort(403, 'Unauthorized access.');
         }
         $jobCard->delete();
         return redirect()->route('job-cards.index')->with('success', 'Job Card deleted.');
@@ -423,8 +474,12 @@ class JobCardController extends Controller
 
     public function updateStatus(Request $request, JobCard $jobCard)
     {
-        if ((int) $jobCard->garage_id !== (int) \App\Models\Garage::getActiveGarageId()) {
-            abort(403);
+        if (auth()->user()->role === 'customer') {
+            abort(403, 'Unauthorized access.');
+        }
+
+        if (auth()->user()->role !== 'super_admin' && (int) $jobCard->garage_id !== (int) \App\Models\Garage::getActiveGarageId()) {
+            abort(403, 'Unauthorized access.');
         }
 
         $validated = $request->validate([
@@ -510,12 +565,12 @@ class JobCardController extends Controller
     public function invoice(JobCard $jobCard)
     {
         if (auth()->user()->role === 'customer') {
-            if (!$jobCard->customer_id || auth()->user()->customerProfile->id !== $jobCard->customer_id) {
-                abort(403);
+            if (!$jobCard->customer_id || auth()->user()->customerProfile?->id !== $jobCard->customer_id) {
+                abort(403, 'Unauthorized access.');
             }
         } else {
-            if ((int) $jobCard->garage_id !== (int) \App\Models\Garage::getActiveGarageId()) {
-                abort(403);
+            if (auth()->user()->role !== 'super_admin' && (int) $jobCard->garage_id !== (int) \App\Models\Garage::getActiveGarageId()) {
+                abort(403, 'Unauthorized access.');
             }
         }
 
@@ -529,12 +584,12 @@ class JobCardController extends Controller
     public function uploadPaymentScreenshot(Request $request, JobCard $jobCard)
     {
         if (auth()->user()->role === 'customer') {
-            if (!$jobCard->customer_id || auth()->user()->customerProfile->id !== $jobCard->customer_id) {
-                abort(403);
+            if (!$jobCard->customer_id || auth()->user()->customerProfile?->id !== $jobCard->customer_id) {
+                abort(403, 'Unauthorized access.');
             }
         } else {
-            if ((int) $jobCard->garage_id !== (int) \App\Models\Garage::getActiveGarageId()) {
-                abort(403);
+            if (auth()->user()->role !== 'super_admin' && (int) $jobCard->garage_id !== (int) \App\Models\Garage::getActiveGarageId()) {
+                abort(403, 'Unauthorized access.');
             }
         }
 
@@ -556,11 +611,11 @@ class JobCardController extends Controller
     public function updatePaymentStatus(Request $request, JobCard $jobCard)
     {
         if (auth()->user()->role === 'customer') {
-            abort(403);
+            abort(403, 'Unauthorized access.');
         }
 
-        if ((int) $jobCard->garage_id !== (int) \App\Models\Garage::getActiveGarageId()) {
-            abort(403);
+        if (auth()->user()->role !== 'super_admin' && (int) $jobCard->garage_id !== (int) \App\Models\Garage::getActiveGarageId()) {
+            abort(403, 'Unauthorized access.');
         }
 
         $validated = $request->validate([

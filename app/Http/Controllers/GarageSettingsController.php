@@ -52,8 +52,16 @@ class GarageSettingsController extends Controller
         }
     }
 
+    private function authorizeOwnerOrAdmin(): void
+    {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['owner', 'super_admin'])) {
+            abort(403, 'Unauthorized access.');
+        }
+    }
+
     public function edit()
     {
+        $this->authorizeOwnerOrAdmin();
         $this->ensureGarageColumnsExist();
 
         $activeGarageId = Garage::getActiveGarageId();
@@ -66,6 +74,7 @@ class GarageSettingsController extends Controller
 
     public function update(Request $request)
     {
+        $this->authorizeOwnerOrAdmin();
         $this->ensureGarageColumnsExist();
 
         $activeGarageId = Garage::getActiveGarageId();

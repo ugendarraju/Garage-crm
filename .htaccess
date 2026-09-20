@@ -1,13 +1,28 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Deny access to sensitive files
-    <FilesMatch "^\.(env|git)|composer\.(json|lock)|package(-lock)?\.json|artisan">
-        Order allow,deny
-        Deny from all
-    </FilesMatch>
+    # Block access to hidden files (.env, .git, etc.) and configuration/source files
+    RewriteRule ^(\.env|\.git|\.editorconfig|\.npmrc|composer\.(json|lock)|package(-lock)?\.json|artisan|phpunit\.xml) - [F,L,NC]
 
-    # Forward all traffic to the public directory
+    # Block direct access to internal framework directories
+    RewriteRule ^(app|bootstrap|config|database|resources|routes|storage/logs|tools|vendor) - [F,L,NC]
+
+    # Block dangerous executable files directly
+    RewriteRule \.(sql|sh|bash|ps1|vbs|log|bak|swp)$ - [F,L,NC]
+
+    # Forward all legitimate traffic to public directory
     RewriteCond %{REQUEST_URI} !public/
     RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
+
+# Fallback deny rules for older or non-rewrite Apache configurations
+<FilesMatch "^\.(env|git|editorconfig|npmrc)|composer\.(json|lock)|package(-lock)?\.json|artisan|phpunit\.xml|\.(sql|sh|ps1|vbs|log)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+

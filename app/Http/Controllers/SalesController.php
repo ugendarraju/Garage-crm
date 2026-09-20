@@ -13,6 +13,10 @@ class SalesController extends Controller
      */
     public function index(Request $request)
     {
+        if (!auth()->check() || auth()->user()->role === 'customer') {
+            abort(403, 'Unauthorized access.');
+        }
+
         $garageId = \App\Models\Garage::getActiveGarageId();
 
         // If super admin and no garage selected, redirect to garages index

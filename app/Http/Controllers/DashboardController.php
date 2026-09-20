@@ -88,7 +88,10 @@ class DashboardController extends Controller
             ->whereIn('status', ['complete', 'completed', 'delivered'])
             ->sum('final_total');
             
-        $activeMechanics = User::where('role', 'mechanic')->count();
+        $activeMechanics = User::where('garage_id', $garageId)
+            ->where('role', 'mechanic')
+            ->where('is_active', true)
+            ->count();
 
         // Lists
         $recentJobCards = JobCard::with(['customer.user', 'vehicle.brand', 'vehicle.vehicleModel'])

@@ -10,9 +10,18 @@ use Inertia\Inertia;
 
 class GarageController extends Controller
 {
+    private function authorizeSuperAdmin(): void
+    {
+        if (!auth()->check() || auth()->user()->role !== 'super_admin') {
+            abort(403, 'Unauthorized access.');
+        }
+    }
+
     // SuperAdmin only
     public function index()
     {
+        $this->authorizeSuperAdmin();
+
         $garages = Garage::with('owners')->orderBy('created_at', 'desc')->get();
         // Since SuperAdmin doesn't need to see job cards here, we just list garages.
         return Inertia::render('SuperAdmin/Garages/Index', [
@@ -22,6 +31,8 @@ class GarageController extends Controller
 
     public function toggleActive($id)
     {
+        $this->authorizeSuperAdmin();
+
         $garage = Garage::findOrFail($id);
         $garage->is_active = !$garage->is_active;
         $garage->save();
@@ -32,6 +43,8 @@ class GarageController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorizeSuperAdmin();
+
         $request->validate([
             'name' => 'required|string|max:255',
             'owner_name' => 'required|string|max:255',
@@ -57,6 +70,8 @@ class GarageController extends Controller
 
     public function destroy($id)
     {
+        $this->authorizeSuperAdmin();
+
         $garage = Garage::findOrFail($id);
         $garage->delete();
         return redirect()->back()->with('success', 'Garage deleted successfully.');
