@@ -40,6 +40,13 @@ const handleSearch = () => {
 };
 
 // Form for Adding / Editing Expense
+const receiptPreview = ref(null);
+const existingReceipt = ref(null);
+const cameraInput = ref(null);
+const galleryInput = ref(null);
+const previewModalImage = ref(null);
+const previewModalTitle = ref('');
+
 const form = useForm({
     title: '',
     amount: '',
@@ -47,11 +54,28 @@ const form = useForm({
     expense_date: new Date().toISOString().split('T')[0],
     payment_method: 'cash',
     notes: '',
+    receipt: null,
+    remove_receipt: false,
 });
+
+const getReceiptUrl = (path) => {
+    if (!path) return '';
+    if (path.startsWith('http') || path.startsWith('/storage/')) return path;
+    return `/storage/${path}`;
+};
+
+const openLightbox = (path, title) => {
+    previewModalImage.value = getReceiptUrl(path);
+    previewModalTitle.value = title || 'Bill / Receipt Image';
+};
 
 const openCreateModal = () => {
     editingExpense.value = null;
     form.reset();
+    form.receipt = null;
+    form.remove_receipt = false;
+    receiptPreview.value = null;
+    existingReceipt.value = null;
     form.expense_date = new Date().toISOString().split('T')[0];
     showAddModal.value = true;
 };
@@ -64,22 +88,79 @@ const openEditModal = (expense) => {
     form.expense_date = expense.expense_date;
     form.payment_method = expense.payment_method || 'cash';
     form.notes = expense.notes || '';
+    form.receipt = null;
+    form.remove_receipt = false;
+    receiptPreview.value = null;
+    existingReceipt.value = expense.receipt_path || null;
     showAddModal.value = true;
+};
+
+const onFileSelected = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    form.receipt = file;
+    form.remove_receipt = false;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        receiptPreview.value = e.target.result;
+    };
+    reader.readAsDataURL(file);
+};
+
+const triggerCamera = () => {
+    if (cameraInput.value) {
+        cameraInput.value.value = '';
+        cameraInput.value.click();
+    }
+};
+
+const triggerGallery = () => {
+    if (galleryInput.value) {
+        galleryInput.value.value = '';
+        galleryInput.value.click();
+    }
+};
+
+const removeSelectedReceipt = () => {
+    form.receipt = null;
+    receiptPreview.value = null;
+    if (cameraInput.value) cameraInput.value.value = '';
+    if (galleryInput.value) galleryInput.value.value = '';
+};
+
+const removeExistingReceipt = () => {
+    existingReceipt.value = null;
+    form.remove_receipt = true;
+    form.receipt = null;
+    receiptPreview.value = null;
 };
 
 const submitForm = () => {
     if (editingExpense.value) {
-        form.put(route('expenses.update', editingExpense.value.id), {
+        form.transform((data) => ({
+            ...data,
+            _method: 'PUT',
+        })).post(route('expenses.update', editingExpense.value.id), {
+            forceFormData: true,
+            preserveScroll: true,
             onSuccess: () => {
                 showAddModal.value = false;
                 form.reset();
+                receiptPreview.value = null;
+                existingReceipt.value = null;
             }
         });
     } else {
         form.post(route('expenses.store'), {
+            forceFormData: true,
+            preserveScroll: true,
             onSuccess: () => {
                 showAddModal.value = false;
                 form.reset();
+                receiptPreview.value = null;
+                existingReceipt.value = null;
             }
         });
     }
@@ -319,6 +400,25 @@ const getCategoryIcon = (category) => {
                                 <td class="px-5 py-4">
                                     <div class="text-xs font-bold text-gray-900">{{ item.title }}</div>
                                     <div v-if="item.notes" class="text-[11px] text-gray-500 mt-0.5">{{ item.notes }}</div>
+                                    <div v-if="item.receipt_path" class="mt-1.5 flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            @click="openLightbox(item.receipt_path, item.title)"
+                                            class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition active:scale-95"
+                                            title="Click to view attached bill"
+                                        >
+                                            <span>🧾</span>
+                                            <span>View Bill</span>
+                                        </button>
+                                        <a
+                                            :href="getReceiptUrl(item.receipt_path)"
+                                            target="_blank"
+                                            class="text-[11px] text-gray-400 hover:text-gray-600 inline-flex items-center"
+                                            title="Open in new tab"
+                                        >
+                                            ↗
+                                        </a>
+                                    </div>
                                 </td>
 
                                 <!-- Category -->
@@ -447,6 +547,104 @@ const getCategoryIcon = (category) => {
                             ></textarea>
                         </div>
 
+                        <!-- Attach Bill Receipt / Smartphone Camera Section -->
+                        <div class="bg-gray-50 p-3.5 rounded-xl border border-gray-200 space-y-2">
+                            <label class="block text-xs font-bold text-gray-700 flex items-center justify-between">
+                                <span class="flex items-center gap-1.5">
+                                    <span>📎</span>
+                                    <span>Attach Bill / Payment Screenshot</span>
+                                </span>
+                                <span class="text-[10px] text-gray-400 font-normal">PNG, JPG, WebP (Max 10MB)</span>
+                            </label>
+
+                            <!-- Hidden file inputs -->
+                            <input
+                                type="file"
+                                ref="cameraInput"
+                                accept="image/*"
+                                capture="environment"
+                                class="hidden"
+                                @change="onFileSelected"
+                            />
+                            <input
+                                type="file"
+                                ref="galleryInput"
+                                accept="image/*"
+                                class="hidden"
+                                @change="onFileSelected"
+                            />
+
+                            <!-- Newly captured/selected photo preview -->
+                            <div v-if="receiptPreview" class="flex items-center gap-3 p-2 bg-emerald-50/70 border border-emerald-300 rounded-lg">
+                                <img :src="receiptPreview" alt="Receipt Preview" class="w-14 h-14 object-cover rounded-md border border-emerald-200" />
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-xs font-bold text-emerald-800 flex items-center gap-1">
+                                        <span>✓ Ready to upload</span>
+                                    </div>
+                                    <div class="text-[11px] text-gray-500 truncate">{{ form.receipt?.name || 'Photo captured from camera' }}</div>
+                                </div>
+                                <button
+                                    type="button"
+                                    @click="removeSelectedReceipt"
+                                    class="px-2.5 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                                >
+                                    Remove
+                                </button>
+                            </div>
+
+                            <!-- Existing photo when editing an expense -->
+                            <div v-else-if="existingReceipt" class="flex items-center gap-3 p-2 bg-white border border-gray-200 rounded-lg">
+                                <img :src="getReceiptUrl(existingReceipt)" alt="Existing Bill" class="w-14 h-14 object-cover rounded-md border border-gray-200" />
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-xs font-bold text-gray-800">Attached Bill / Receipt</div>
+                                    <button
+                                        type="button"
+                                        @click="openLightbox(existingReceipt, form.title)"
+                                        class="text-[11px] text-emerald-600 font-semibold hover:underline inline-flex items-center gap-0.5"
+                                    >
+                                        <span>View Full Image</span>
+                                        <span>↗</span>
+                                    </button>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <button
+                                        type="button"
+                                        @click="triggerCamera"
+                                        class="px-2.5 py-1 text-xs font-bold text-gray-700 hover:bg-gray-100 rounded-lg transition"
+                                    >
+                                        Retake
+                                    </button>
+                                    <button
+                                        type="button"
+                                        @click="removeExistingReceipt"
+                                        class="px-2.5 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Action buttons: Direct Camera & File Upload -->
+                            <div v-else class="grid grid-cols-2 gap-2">
+                                <button
+                                    type="button"
+                                    @click="triggerCamera"
+                                    class="flex items-center justify-center gap-2 py-2.5 px-3 bg-white hover:bg-emerald-50 text-emerald-700 hover:text-emerald-800 border border-emerald-300 rounded-xl text-xs font-bold shadow-2xs transition active:scale-95"
+                                >
+                                    <span class="text-base">📸</span>
+                                    <span>Take Photo (Camera)</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    @click="triggerGallery"
+                                    class="flex items-center justify-center gap-2 py-2.5 px-3 bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 rounded-xl text-xs font-bold shadow-2xs transition active:scale-95"
+                                >
+                                    <span class="text-base">📁</span>
+                                    <span>Upload Screenshot / Bill</span>
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
                             <button
                                 type="button"
@@ -464,6 +662,46 @@ const getCategoryIcon = (category) => {
                             </button>
                         </div>
                     </form>
+                </div>
+            </div>
+
+            <!-- Lightbox Image Modal for Bill/Receipt Preview -->
+            <div
+                v-if="previewModalImage"
+                class="fixed inset-0 z-50 bg-black/85 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6"
+                @click="previewModalImage = null"
+            >
+                <div class="relative max-w-3xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]" @click.stop>
+                    <div class="flex items-center justify-between px-4 py-3 bg-gray-900 text-white shrink-0">
+                        <div class="text-xs font-bold truncate flex items-center gap-2">
+                            <span>🧾</span>
+                            <span class="truncate">{{ previewModalTitle || 'Bill / Receipt Image' }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <a
+                                :href="previewModalImage"
+                                target="_blank"
+                                class="px-2.5 py-1 text-xs font-semibold bg-white/15 hover:bg-white/25 rounded-md text-white transition inline-flex items-center gap-1"
+                            >
+                                <span>Open Full</span>
+                                <span>↗</span>
+                            </a>
+                            <button
+                                type="button"
+                                @click="previewModalImage = null"
+                                class="p-1 hover:bg-white/20 rounded-full text-white text-base leading-none transition"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-gray-100 flex items-center justify-center overflow-auto flex-1">
+                        <img
+                            :src="previewModalImage"
+                            alt="Bill / Receipt Full Preview"
+                            class="max-w-full max-h-[75vh] object-contain rounded-lg shadow-sm"
+                        />
+                    </div>
                 </div>
             </div>
         </div>

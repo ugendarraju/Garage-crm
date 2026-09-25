@@ -92,9 +92,19 @@ class DatabaseSchemaAutoFixService
                         $table->index(['garage_id', 'expense_date']);
                         $table->index(['garage_id', 'category']);
                     });
+                } else {
+                    if (!Schema::hasColumn('expenses', 'receipt_path')) {
+                        try {
+                            Schema::table('expenses', function ($table) {
+                                $table->string('receipt_path')->nullable();
+                            });
+                        } catch (\Throwable $e) {
+                            Log::warning('AutoFix: Failed to add expenses.receipt_path: ' . $e->getMessage());
+                        }
+                    }
                 }
             } catch (\Throwable $e) {
-                Log::warning('AutoFix: Failed to create expenses table: ' . $e->getMessage());
+                Log::warning('AutoFix: Failed to ensure expenses table: ' . $e->getMessage());
             }
         } catch (\Throwable $e) {
             Log::warning('DatabaseSchemaAutoFixService warning: ' . $e->getMessage());

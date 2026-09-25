@@ -127,10 +127,11 @@ const guides = [
             'Click **Expenses & Profit** in the left sidebar menu.',
             'Review the top KPI cards: **Workshop Revenue** (from completed job cards), **Parts & Stock Cost** (from purchase invoices), **Operating Expenses**, and your real **True Net Profit** with Profit Margin %.',
             'Select your timeframe: **Today**, **This Week**, **This Month**, or **Last Month**.',
-            'Click **+ Record Expense** to record an expense → Enter Title, Amount, Date, Category (Rent, Utilities, Food & Tea, Consumables, Tools, Salary Advance, Maintenance, Other), and Payment Method (Cash, UPI, Bank Transfer).',
-            'Click **Save Expense**. The expense is logged and immediately deducted from your net profit calculation.'
+            'Click **+ Record Expense** to open the modal → Enter Title, Amount, Date, Category (Rent, Utilities, Food & Tea, Consumables, Tools, Salary Advance, Maintenance, Other), and Payment Method (Cash, UPI, Bank Transfer).',
+            'Attach Bill / Proof: Click **📸 Take Photo (Camera)** to snap a live photo of a paper receipt or vendor voucher with your smartphone camera, or click **📁 Upload Screenshot / Bill** to attach a digital UPI screenshot (GPay / PhonePe / Paytm).',
+            'Click **Save Expense**. The expense is logged, your net profit is recalculated immediately, and a 1-click **🧾 View Bill** button appears on the expense row to inspect the receipt anytime in full-screen.'
         ],
-        tip: 'Logging even small daily expenses like ₹50 tea and ₹200 consumable sprays ensures you know your exact take-home earnings every month!'
+        tip: 'Taking photos of paper bills and tea vouchers gives you 100% airtight audit proof for your accountant and GST filings!'
     },
     {
         id: 'add-customer',

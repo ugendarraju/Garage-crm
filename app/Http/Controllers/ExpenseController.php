@@ -154,9 +154,15 @@ class ExpenseController extends Controller
             'expense_date' => 'required|date',
             'payment_method' => 'nullable|string|in:cash,upi,bank_transfer',
             'notes' => 'nullable|string',
+            'receipt' => 'nullable|image|max:10240',
         ]);
 
         $garageId = Garage::getActiveGarageId();
+
+        $receiptPath = null;
+        if ($request->hasFile('receipt')) {
+            $receiptPath = $request->file('receipt')->store('expenses', 'public');
+        }
 
         Expense::create([
             'garage_id' => $garageId,
@@ -166,6 +172,7 @@ class ExpenseController extends Controller
             'expense_date' => $validated['expense_date'],
             'payment_method' => $validated['payment_method'] ?? 'cash',
             'notes' => $validated['notes'] ?? null,
+            'receipt_path' => $receiptPath,
             'created_by' => auth()->id(),
         ]);
 
@@ -188,9 +195,26 @@ class ExpenseController extends Controller
             'expense_date' => 'required|date',
             'payment_method' => 'nullable|string|in:cash,upi,bank_transfer',
             'notes' => 'nullable|string',
+            'receipt' => 'nullable|image|max:10240',
+            'remove_receipt' => 'nullable|boolean',
         ]);
 
-        $expense->update($validated);
+        $updateData = [
+            'title' => $validated['title'],
+            'amount' => $validated['amount'],
+            'category' => $validated['category'],
+            'expense_date' => $validated['expense_date'],
+            'payment_method' => $validated['payment_method'] ?? 'cash',
+            'notes' => $validated['notes'] ?? null,
+        ];
+
+        if ($request->hasFile('receipt')) {
+            $updateData['receipt_path'] = $request->file('receipt')->store('expenses', 'public');
+        } elseif ($request->boolean('remove_receipt')) {
+            $updateData['receipt_path'] = null;
+        }
+
+        $expense->update($updateData);
 
         return back()->with('success', 'Expense updated successfully.');
     }
