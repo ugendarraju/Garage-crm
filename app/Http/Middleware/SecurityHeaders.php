@@ -27,8 +27,12 @@ class SecurityHeaders
         // Referrer policy
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
-        // Limit unnecessary browser feature access
-        $response->headers->set('Permissions-Policy', 'camera=(), microphone=(self), geolocation=()');
+        // Browser feature access permissions (allow camera for photo uploads & microphone for AI assistant)
+        $response->headers->set('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=()');
+
+        // Content Security Policy
+        $csp = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.bunny.net; font-src 'self' https://fonts.bunny.net data:; img-src 'self' data: blob: https:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'self';";
+        $response->headers->set('Content-Security-Policy', $csp);
 
         return $response;
     }

@@ -142,20 +142,27 @@ class InventoryController extends Controller
         
         $csvHeader = ['ID', 'Part Name', 'Part Code', 'Category', 'Current Stock', 'Min Stock Level', 'Current Price', 'Location'];
         
-        $callback = function() use($inventory, $csvHeader) {
+        $sanitizeCell = function ($value) {
+            if (is_string($value) && in_array(substr($value, 0, 1), ['=', '+', '-', '@', "\t", "\r"])) {
+                return "'" . $value;
+            }
+            return $value;
+        };
+
+        $callback = function() use($inventory, $csvHeader, $sanitizeCell) {
             $file = fopen('php://output', 'w');
             fputcsv($file, $csvHeader);
             
             foreach ($inventory as $item) {
                 fputcsv($file, [
                     $item->id,
-                    $item->part_name,
-                    $item->part_code,
-                    $item->category,
+                    $sanitizeCell($item->part_name),
+                    $sanitizeCell($item->part_code),
+                    $sanitizeCell($item->category),
                     $item->current_stock,
                     $item->min_stock_level,
                     $item->current_price,
-                    $item->location,
+                    $sanitizeCell($item->location),
                 ]);
             }
             fclose($file);

@@ -25,6 +25,16 @@ class Garage extends Model
         'google_review_url',
     ];
 
+    /**
+     * The attributes that should be hidden for serialization.
+     * Prevents leaking privileged third-party keys client-side.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'ai_api_key',
+    ];
+
     public function expenses()
     {
         return $this->hasMany(Expense::class);

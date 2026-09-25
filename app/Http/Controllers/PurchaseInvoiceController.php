@@ -62,7 +62,10 @@ class PurchaseInvoiceController extends Controller
             'status' => 'required|in:paid,unpaid,partial',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
-            'items.*.inventory_id' => 'nullable|exists:inventories,id',
+            'items.*.inventory_id' => [
+                'nullable',
+                \Illuminate\Validation\Rule::exists('inventories', 'id')->where('garage_id', $garageId),
+            ],
             'items.*.part_name' => 'nullable|string',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
@@ -193,7 +196,10 @@ class PurchaseInvoiceController extends Controller
             'notes' => 'nullable|string',
             'total_amount' => 'required|numeric|min:0',
             'items' => 'required|array|min:1',
-            'items.*.inventory_id' => 'nullable|exists:inventories,id',
+            'items.*.inventory_id' => [
+                'nullable',
+                \Illuminate\Validation\Rule::exists('inventories', 'id')->where('garage_id', $garageId),
+            ],
             'items.*.part_name' => 'nullable|string',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',

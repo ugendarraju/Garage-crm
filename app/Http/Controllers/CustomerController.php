@@ -201,10 +201,11 @@ class CustomerController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
+        $temporaryPassword = Str::random(10);
         $customer->user->update([
-            'password' => bcrypt('password')
+            'password' => bcrypt($temporaryPassword)
         ]);
 
-        return redirect()->back()->with('success', 'Customer password reset to "password".');
+        return redirect()->back()->with('success', "Customer password reset successfully. Temporary password: {$temporaryPassword}");
     }
 }

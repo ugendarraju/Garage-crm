@@ -18,10 +18,16 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        $activeGarageId = \App\Models\Garage::getActiveGarageId();
+        $garage = $activeGarageId ? \App\Models\Garage::find($activeGarageId) : null;
+        $garageData = $garage ? array_merge($garage->toArray(), [
+            'has_ai_api_key' => !empty($garage->ai_api_key)
+        ]) : null;
+
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
-            'garage' => \App\Models\Garage::getActiveGarageId() ? \App\Models\Garage::find(\App\Models\Garage::getActiveGarageId()) : null,
+            'garage' => $garageData,
         ]);
     }
 

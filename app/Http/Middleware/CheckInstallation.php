@@ -15,6 +15,20 @@ class CheckInstallation
     {
         $isInstalled = file_exists(storage_path('installed'));
 
+        // In production/staging, installer is strictly disabled to prevent remote takeover
+        if (!app()->isLocal()) {
+            if (!$isInstalled) {
+                @file_put_contents(storage_path('installed'), json_encode([
+                    'sealed_at' => now()->toIso8601String(),
+                    'environment' => app()->environment(),
+                ]));
+                $isInstalled = true;
+            }
+            if ($request->is('install*')) {
+                return redirect('/');
+            }
+        }
+
         // If lock file is missing but database already has users/garages, permanently seal it
         if (!$isInstalled) {
             try {

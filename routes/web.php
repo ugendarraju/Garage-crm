@@ -19,7 +19,9 @@ Route::get('/', function () {
 });
 
 Route::get('/book/{slug?}', [\App\Http\Controllers\ServiceRequestController::class, 'create'])->name('service-requests.create');
-Route::post('/book', [\App\Http\Controllers\ServiceRequestController::class, 'store'])->name('service-requests.store');
+Route::post('/book', [\App\Http\Controllers\ServiceRequestController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('service-requests.store');
 
 Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -114,7 +116,9 @@ Route::middleware('auth')->group(function () {
 
     // AI Assistant
     Route::post('/ai-assistant/key', [\App\Http\Controllers\AIAssistantController::class, 'updateKey'])->name('ai-assistant.key');
-    Route::post('/ai-assistant/command', [\App\Http\Controllers\AIAssistantController::class, 'processCommand'])->name('ai-assistant.command');
+    Route::post('/ai-assistant/command', [\App\Http\Controllers\AIAssistantController::class, 'processCommand'])
+        ->middleware('throttle:20,1')
+        ->name('ai-assistant.command');
 
     // Super Admin CRM Settings
     Route::get('/admin/settings', [\App\Http\Controllers\SuperAdmin\SystemSettingsController::class, 'edit'])->name('admin.settings.index');

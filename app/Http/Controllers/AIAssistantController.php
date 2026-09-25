@@ -22,7 +22,9 @@ class AIAssistantController extends Controller
         if (!$garageId) abort(403, 'No active garage selected.');
 
         $garage = Garage::findOrFail($garageId);
-        $garage->update(['ai_api_key' => $validated['ai_api_key']]);
+        if ($request->filled('ai_api_key')) {
+            $garage->update(['ai_api_key' => trim($validated['ai_api_key'])]);
+        }
 
         return redirect()->back()->with('success', 'AI API Key updated successfully.');
     }

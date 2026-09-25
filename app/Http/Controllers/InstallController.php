@@ -15,7 +15,7 @@ class InstallController extends Controller
 {
     public function index()
     {
-        if (file_exists(storage_path('installed'))) {
+        if (file_exists(storage_path('installed')) || !app()->isLocal()) {
             return redirect('/');
         }
 
@@ -50,7 +50,7 @@ class InstallController extends Controller
         @set_time_limit(300);
         @ini_set('memory_limit', '512M');
 
-        if (file_exists(storage_path('installed'))) {
+        if (file_exists(storage_path('installed')) || !app()->isLocal()) {
             return redirect('/');
         }
 

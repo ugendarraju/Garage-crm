@@ -358,8 +358,6 @@ class JobCardController extends Controller
 
         DatabaseSchemaAutoFixService::ensureSchemaIsUpToDate();
 
-        \Log::info('JobCard update request: ', $request->all());
-
         $validated = $request->validate([
             'customer_id' => 'nullable|exists:customers,id',
             'new_customer_name' => 'nullable|string|max:255',

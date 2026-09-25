@@ -67,6 +67,7 @@ const updateApiKey = () => {
                     type="password"
                     class="mt-1 block w-full"
                     v-model="form.ai_api_key"
+                    :placeholder="garage?.has_ai_api_key ? '•••••••••••••••• (API Key is configured — enter new key to replace)' : 'AIzaSy...'"
                     autocomplete="off"
                 />
 

@@ -509,10 +509,31 @@ class BackupService
                     continue;
                 }
 
+                // Security: Prevent Zip Slip / Path Traversal
+                if (str_contains($relativeFilePath, '..') || str_contains($relativeFilePath, "\0")) {
+                    Log::warning("BackupService: Blocked path traversal attempt in zip entry: {$entryName}");
+                    continue;
+                }
+
+                // Security: Disallow executable file extensions in uploaded asset restores
+                $extension = strtolower(pathinfo($relativeFilePath, PATHINFO_EXTENSION));
+                if (in_array($extension, ['php', 'phtml', 'phar', 'php5', 'php7', 'php8', 'htaccess', 'sh', 'exe', 'bat', 'cmd'])) {
+                    Log::warning("BackupService: Blocked potentially executable file restore: {$entryName}");
+                    continue;
+                }
+
                 $destination = $targetUploadFolder . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativeFilePath);
                 $destDir = dirname($destination);
                 if (!is_dir($destDir)) {
                     @mkdir($destDir, 0755, true);
+                }
+
+                // Verify resolved canonical directory path starts with canonical target folder
+                $realTarget = realpath($targetUploadFolder);
+                $realDestDir = realpath($destDir);
+                if (!$realTarget || !$realDestDir || !str_starts_with(str_replace('\\', '/', $realDestDir), str_replace('\\', '/', $realTarget))) {
+                    Log::warning("BackupService: Blocked directory escape attempt in zip entry: {$entryName}");
+                    continue;
                 }
 
                 $stream = $zip->getStream($entryName);

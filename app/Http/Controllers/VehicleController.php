@@ -127,6 +127,13 @@ class VehicleController extends Controller
             if ($vehicle->customer_id !== auth()->user()->customerProfile?->id) {
                 abort(403, 'Unauthorized access.');
             }
+        } else {
+            if (auth()->user()->role !== 'super_admin') {
+                $vehicleGarageId = $vehicle->garage_id ?: $vehicle->customer?->garage_id;
+                if (!$vehicleGarageId || (int) $vehicleGarageId !== (int) $garageId) {
+                    abort(403, 'Unauthorized access to this vehicle.');
+                }
+            }
         }
 
         $vehicle->load([
@@ -184,7 +191,8 @@ class VehicleController extends Controller
             }
         } else {
             if (auth()->user()->role !== 'super_admin') {
-                if ($vehicle->customer && (int) $vehicle->customer->garage_id !== (int) $garageId) {
+                $vehicleGarageId = $vehicle->garage_id ?: $vehicle->customer?->garage_id;
+                if (!$vehicleGarageId || (int) $vehicleGarageId !== (int) $garageId) {
                     abort(403, 'Unauthorized access.');
                 }
             }

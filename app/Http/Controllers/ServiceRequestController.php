@@ -63,9 +63,9 @@ class ServiceRequestController extends Controller
             'vehicle_year' => 'required',
             'vehicle_running_km' => 'nullable|string',
             'fuel_range' => 'nullable|string',
-            'issues' => 'required|array|min:1',
-            'issues.*.description' => 'required|string',
-            'issues.*.image' => 'nullable|image|max:15360',
+            'issues' => 'required|array|min:1|max:5',
+            'issues.*.description' => 'required|string|max:1000',
+            'issues.*.image' => 'nullable|image|max:5120', // max 5MB
         ]);
 
         // Check if existing user
@@ -152,8 +152,8 @@ class ServiceRequestController extends Controller
         }
 
         $customer = \App\Models\Customer::firstOrCreate(
-            ['user_id' => $user->id],
-            ['garage_id' => $garageId, 'address' => '']
+            ['user_id' => $user->id, 'garage_id' => $garageId],
+            ['address' => '']
         );
 
         // Attempt to link vehicle
