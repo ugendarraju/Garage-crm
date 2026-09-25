@@ -74,6 +74,12 @@ const buildMessage = (templateKey) => {
         return `📋 *Service Estimate for Approval*\n\nDear *${customerName}*,\nWe have inspected your vehicle *${vehicleStr}* under Job Card *#${jobNumber}*.\n\n💰 *Estimated Total:* ${finalTotal}\n\nPlease confirm your approval so our team can proceed with the repairs.\n\n📍 *${garageName}*\n${garagePhone}`;
     }
 
+    if (templateKey === 'review') {
+        const reviewUrl = activeGarage.value?.google_review_url || '';
+        const linkPart = reviewUrl ? `\n👉 *Review Us Here:* ${reviewUrl}` : '';
+        return `⭐ *Thank You for Visiting ${garageName}!* ⭐\n\nDear *${customerName}*,\nThank you for trusting us with your vehicle *${vehicleStr}* under Job Card *#${jobNumber}*.\n\nWe hope you had a great service experience! If you have a moment, please support our workshop by giving us a 5-star review on Google:${linkPart}\n\nYour feedback helps us serve you even better. Drive safe!\n\n📍 *${garageName}*\n${garagePhone}`;
+    }
+
     return '';
 };
 
@@ -171,22 +177,22 @@ const copyMessage = async () => {
             <!-- Template Selectors -->
             <div class="mt-4">
                 <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Select Message Template</label>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
                     <button
                         type="button"
                         @click="onTemplateChange('ready')"
                         :class="selectedTemplate === 'ready' ? 'bg-[#25D366] text-white border-[#25D366] shadow-sm' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
-                        class="px-2.5 py-2 rounded-xl border text-xs font-bold transition-all text-center flex flex-col items-center gap-1"
+                        class="px-2 py-2 rounded-xl border text-xs font-bold transition-all text-center flex flex-col items-center gap-1"
                     >
                         <span class="text-base">🚗</span>
-                        <span>Ready for Pickup</span>
+                        <span>Ready Pickup</span>
                     </button>
 
                     <button
                         type="button"
                         @click="onTemplateChange('progress')"
                         :class="selectedTemplate === 'progress' ? 'bg-[#25D366] text-white border-[#25D366] shadow-sm' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
-                        class="px-2.5 py-2 rounded-xl border text-xs font-bold transition-all text-center flex flex-col items-center gap-1"
+                        class="px-2 py-2 rounded-xl border text-xs font-bold transition-all text-center flex flex-col items-center gap-1"
                     >
                         <span class="text-base">🔧</span>
                         <span>In Progress</span>
@@ -196,7 +202,7 @@ const copyMessage = async () => {
                         type="button"
                         @click="onTemplateChange('invoice')"
                         :class="selectedTemplate === 'invoice' ? 'bg-[#25D366] text-white border-[#25D366] shadow-sm' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
-                        class="px-2.5 py-2 rounded-xl border text-xs font-bold transition-all text-center flex flex-col items-center gap-1"
+                        class="px-2 py-2 rounded-xl border text-xs font-bold transition-all text-center flex flex-col items-center gap-1"
                     >
                         <span class="text-base">🧾</span>
                         <span>Invoice Link</span>
@@ -206,10 +212,20 @@ const copyMessage = async () => {
                         type="button"
                         @click="onTemplateChange('estimate')"
                         :class="selectedTemplate === 'estimate' ? 'bg-[#25D366] text-white border-[#25D366] shadow-sm' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
-                        class="px-2.5 py-2 rounded-xl border text-xs font-bold transition-all text-center flex flex-col items-center gap-1"
+                        class="px-2 py-2 rounded-xl border text-xs font-bold transition-all text-center flex flex-col items-center gap-1"
                     >
                         <span class="text-base">📋</span>
                         <span>Estimate</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        @click="onTemplateChange('review')"
+                        :class="selectedTemplate === 'review' ? 'bg-[#25D366] text-white border-[#25D366] shadow-sm' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
+                        class="px-2 py-2 rounded-xl border text-xs font-bold transition-all text-center flex flex-col items-center gap-1"
+                    >
+                        <span class="text-base">⭐</span>
+                        <span>Review Link</span>
                     </button>
                 </div>
             </div>

@@ -8,15 +8,62 @@ use App\Models\Garage;
 use App\Http\Requests\StoreVehicleRequest;
 use App\Http\Requests\UpdateVehicleRequest;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class VehicleController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $garageId = Garage::getActiveGarageId();
+        $isCustomer = auth()->user()->role === 'customer';
+
+        $query = Vehicle::with(['brand', 'vehicleModel', 'customer.user'])
+            ->withCount('jobCards');
+
+        if ($isCustomer) {
+            $customerProfile = auth()->user()->customerProfile;
+            if ($customerProfile) {
+                $query->where('customer_id', $customerProfile->id);
+            } else {
+                $query->where('id', 0);
+            }
+        } else {
+            $query->where(function ($q) use ($garageId) {
+                $q->where('garage_id', $garageId)
+                  ->orWhereHas('customer', function ($cq) use ($garageId) {
+                      $cq->where('garage_id', $garageId);
+                  })
+                  ->orWhereHas('jobCards', function ($jq) use ($garageId) {
+                      $jq->where('garage_id', $garageId);
+                  });
+            });
+        }
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('registration_number', 'like', "%{$search}%")
+                  ->orWhereHas('brand', function ($bq) use ($search) {
+                      $bq->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('vehicleModel', function ($mq) use ($search) {
+                      $mq->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('customer.user', function ($uq) use ($search) {
+                      $uq->where('name', 'like', "%{$search}%")
+                         ->orWhere('phone', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $vehicles = $query->latest()->paginate(25)->withQueryString();
+
+        return Inertia::render('Vehicles/Index', [
+            'vehicles' => $vehicles,
+            'search' => $search ?? '',
+        ]);
     }
 
     /**
@@ -68,7 +115,39 @@ class VehicleController extends Controller
      */
     public function show(Vehicle $vehicle)
     {
-        //
+        $garageId = Garage::getActiveGarageId();
+        $isCustomer = auth()->user()->role === 'customer';
+
+        if ($isCustomer) {
+            if ($vehicle->customer_id !== auth()->user()->customerProfile?->id) {
+                abort(403, 'Unauthorized access.');
+            }
+        }
+
+        $vehicle->load([
+            'brand',
+            'vehicleModel',
+            'customer.user',
+            'jobCards' => function ($q) {
+                $q->orderBy('created_at', 'desc')->with(['mechanics', 'items', 'issues']);
+            },
+        ]);
+
+        // Calculate vehicle timeline stats
+        $totalVisits = $vehicle->jobCards->count();
+        $lifetimeSpend = $vehicle->jobCards->sum('final_total');
+        $latestKm = $vehicle->jobCards->whereNotNull('vehicle_running_km')->first()?->vehicle_running_km;
+        $nextReminder = $vehicle->jobCards->whereNotNull('next_service_reminder')->sortByDesc('next_service_reminder')->first()?->next_service_reminder;
+
+        return Inertia::render('Vehicles/Show', [
+            'vehicle' => $vehicle,
+            'stats' => [
+                'total_visits' => $totalVisits,
+                'lifetime_spend' => (float) $lifetimeSpend,
+                'latest_km' => $latestKm,
+                'next_reminder' => $nextReminder,
+            ],
+        ]);
     }
 
     /**

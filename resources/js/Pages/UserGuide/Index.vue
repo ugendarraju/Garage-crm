@@ -24,6 +24,11 @@ const categories = [
 ];
 
 const quickSearchTags = [
+    'Service reminders',
+    'Expense tracker',
+    'Vehicle logbook',
+    'Inspection checklist',
+    'Google review link',
     'WhatsApp alerts',
     'Customer portal',
     'Book online',
@@ -39,6 +44,94 @@ const quickSearchTags = [
 ];
 
 const guides = [
+    {
+        id: 'service-reminders',
+        category: 'job_cards',
+        title: 'How to Automate & Send Next Service Reminders on WhatsApp',
+        summary: 'Configure workshop reminder intervals and send 1-click WhatsApp alerts with pre-filled booking links.',
+        keywords: ['service reminders', 'next service', 'reminder interval', 'whatsapp reminder', 'booking link', 'periodic maintenance'],
+        actionRoute: 'service-reminders.index',
+        actionText: 'Open Service Reminders',
+        steps: [
+            'Go to **Settings** → In the **Next Service Reminder Interval** field, choose your standard workshop cycle (e.g., 90 days, 120 days, 180 days) or enter custom days → Click **Save Settings**.',
+            'Whenever a Job Card is created, the next service date is automatically pre-calculated (Today + your configured interval).',
+            'Visit **Service Reminders** in the sidebar to review all vehicles due for service, categorized by **Overdue**, **Due This Week**, and **Due This Month**.',
+            'Click the green **WhatsApp** button beside any vehicle to open WhatsApp with a pre-filled professional reminder and a 1-click online booking link.',
+            'The system automatically marks the reminder as sent.'
+        ],
+        tip: 'Sending WhatsApp reminders 7 days before service due date increases customer retention and recurring workshop revenue by over 40%!'
+    },
+    {
+        id: 'vehicle-logbook',
+        category: 'customers',
+        title: 'How to View Vehicle Digital Service History & Logbooks',
+        summary: 'Search any vehicle registration number to inspect historical job cards, replaced parts, KM progression, and lifetime spend.',
+        keywords: ['vehicle history', 'logbook', 'registration plate', 'vehicle search', 'past visits', 'km history', 'odometer', 'digital logbook'],
+        actionRoute: 'vehicles.index',
+        actionText: 'Search Vehicles',
+        steps: [
+            'Click **Vehicles** in the sidebar menu.',
+            'Type any registration number (e.g. DL01AB1234 or partial plate) into the search bar.',
+            'Click on the vehicle plate or **📜 View Logbook**.',
+            'Inspect the vehicle dashboard showing Total Workshop Visits, Lifetime Spend (₹), Latest Odometer Reading, and Next Scheduled Service.',
+            'Scroll through the interactive chronological timeline to see past job cards, assigned technicians, customer reported complaints, and exact parts replaced with costs.',
+            'Click **+ Create Job Card** directly from the vehicle page for rapid walk-in intake.'
+        ],
+        tip: 'You can also click the "📜 View History" button directly from within any Job Card to check past services before giving repair estimates.'
+    },
+    {
+        id: 'google-review-link',
+        category: 'setup',
+        title: 'How to Collect 5-Star Google Reviews via WhatsApp',
+        summary: 'Configure your Google Maps review link and send 1-click review invites to satisfied customers upon vehicle delivery.',
+        keywords: ['google reviews', 'google maps', 'whatsapp review', 'rating', 'delivery review', 'reputation', 'review link'],
+        actionRoute: 'settings.edit',
+        actionText: 'Configure Google Review Link',
+        steps: [
+            'Get your Google Business review link: Search your garage on Google Maps → Click **Ask for reviews** → Copy the short review link (e.g., `https://g.page/r/.../review`).',
+            'In this CRM, navigate to **Settings** → Paste your link under **Google Maps Review Link** → Click **Save Settings**.',
+            'When delivering a vehicle, open the Job Card or Invoice and click the **WhatsApp** button.',
+            'Select template **⭐ 5-Star Google Review Link**.',
+            'Click **Open WhatsApp**: A courteous thank-you message with your direct Google review link opens on WhatsApp, ready to send with 1 tap!'
+        ],
+        tip: 'Asking for a Google review within 15 minutes of vehicle handover yields the highest review completion rate!'
+    },
+    {
+        id: 'intake-checklist',
+        category: 'job_cards',
+        title: 'How to Use the Digital Intake Inspection Checklist',
+        summary: 'Document vehicle exterior dents, scratches, fuel level, fluids, tyres, and toolkit before repairs begin to prevent customer disputes.',
+        keywords: ['inspection checklist', 'vehicle intake', 'scratch dent', 'dents', 'fuel level', 'tool kit', 'tyre condition', 'walkaround'],
+        actionRoute: 'job-cards.create',
+        actionText: 'Create Job Card with Checklist',
+        steps: [
+            'When creating or editing a Job Card, scroll to the **Vehicle Intake Inspection Checklist** section.',
+            'Click through the 5 essential categories: **Exterior & Body**, **Electricals & Controls**, **Mechanical & Fluids**, **Tyres & Wheels**, and **Belongings & Toolkit**.',
+            'For each item, tap one of the 4 quick status buttons: **OK** (Pass), **Needs Attn** (Amber), **Damaged** (Red Dent/Scratch), or **N/A**.',
+            'Shortcut: Tap **Mark All OK** to fill all items as healthy in 1 click, then simply change any damaged spots.',
+            'Record specific scratch locations or customer belongings removed in the **Intake Remarks** notes field.',
+            'The checklist is saved with the Job Card and can be viewed anytime in read-only mode by staff and customer.'
+        ],
+        tip: 'Always take quick photos of existing dents using the smartphone camera button on the Job Card alongside the checklist.'
+    },
+    {
+        id: 'expense-tracker',
+        category: 'billing',
+        title: 'How to Track Daily Expenses & True Net Profit (Owner Only)',
+        summary: 'Log daily workshop expenses (rent, electricity, tea/food, tools, salary advances) to monitor real net profit after parts cost.',
+        keywords: ['expenses', 'profit and loss', 'net profit', 'operating expenses', 'shop rent', 'salary advance', 'cogs', 'revenue', 'margin', 'owner only'],
+        actionRoute: 'expenses.index',
+        actionText: 'Open Expense Tracker',
+        steps: [
+            'Strict Access Notice: This section is strictly accessible to **Garage Owners and Super Admins only**; mechanics and staff cannot view it.',
+            'Click **Expenses & Profit** in the left sidebar menu.',
+            'Review the top KPI cards: **Workshop Revenue** (from completed job cards), **Parts & Stock Cost** (from purchase invoices), **Operating Expenses**, and your real **True Net Profit** with Profit Margin %.',
+            'Select your timeframe: **Today**, **This Week**, **This Month**, or **Last Month**.',
+            'Click **+ Record Expense** to record an expense → Enter Title, Amount, Date, Category (Rent, Utilities, Food & Tea, Consumables, Tools, Salary Advance, Maintenance, Other), and Payment Method (Cash, UPI, Bank Transfer).',
+            'Click **Save Expense**. The expense is logged and immediately deducted from your net profit calculation.'
+        ],
+        tip: 'Logging even small daily expenses like ₹50 tea and ₹200 consumable sprays ensures you know your exact take-home earnings every month!'
+    },
     {
         id: 'add-customer',
         category: 'customers',

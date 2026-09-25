@@ -69,6 +69,13 @@ Route::middleware('auth')->group(function () {
     Route::patch('/coupons/{coupon}/toggle-active', [\App\Http\Controllers\CouponController::class, 'toggleActive'])->name('coupons.toggle-active');
     Route::resource('coupons', \App\Http\Controllers\CouponController::class);
     
+    // Service Reminders
+    Route::get('/service-reminders', [\App\Http\Controllers\ServiceReminderController::class, 'index'])->name('service-reminders.index');
+    Route::post('/service-reminders/{jobCard}/mark-sent', [\App\Http\Controllers\ServiceReminderController::class, 'markSent'])->name('service-reminders.mark-sent');
+
+    // Daily Expenses & Net Profit Tracker (Owner Only)
+    Route::resource('expenses', \App\Http\Controllers\ExpenseController::class);
+
     // Settings
     Route::get('/settings', [\App\Http\Controllers\GarageSettingsController::class, 'edit'])->name('settings.edit');
     Route::post('/settings', [\App\Http\Controllers\GarageSettingsController::class, 'update'])->name('settings.update');

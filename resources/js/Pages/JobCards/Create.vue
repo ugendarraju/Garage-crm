@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import SearchableSelect from '@/Components/SearchableSelect.vue';
+import InspectionChecklist from '@/Components/InspectionChecklist.vue';
 
 const props = defineProps({
     customers: Array,
@@ -43,6 +44,7 @@ const form = useForm({
     amount_paid: '',
     discount: 0,
     coupon_code: '',
+    inspection_checklist: null,
     description: '',
     
     // Customer Issues
@@ -263,7 +265,12 @@ const handleVehicleSelect = (e) => {
                             </p>
                         </div>
                         <div>
-                            <p class="text-xs font-semibold text-gray-500">Vehicles</p>
+                            <div class="flex items-center justify-between">
+                                <p class="text-xs font-semibold text-gray-500">Vehicles</p>
+                                <a v-if="form.vehicle_id" :href="route('vehicles.show', form.vehicle_id)" target="_blank" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                                    <span>📜 History</span>
+                                </a>
+                            </div>
                             <p class="text-sm font-bold text-gray-900 mt-0.5">
                                 <span v-if="form.vehicle_id">
                                     {{ filteredVehicles.find(v => v.id === form.vehicle_id)?.registration_number }}
@@ -501,6 +508,9 @@ const handleVehicleSelect = (e) => {
                             </div>
                         </div>
                     </div>
+
+                    <!-- Section 2.8: Vehicle Intake Inspection Checklist -->
+                    <InspectionChecklist v-model="form.inspection_checklist" class="mb-6" />
 
                     <!-- Section 3: Services & Parts -->
                     <div class="bg-white rounded-lg border border-gray-200 p-5 relative">

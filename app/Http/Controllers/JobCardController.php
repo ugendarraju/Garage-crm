@@ -6,12 +6,42 @@ use App\Models\JobCard;
 use App\Models\Customer;
 use App\Models\Vehicle;
 use App\Models\User;
+use App\Models\Garage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class JobCardController extends Controller
 {
+    /**
+     * Ensure missing columns exist in job_cards table automatically.
+     */
+    private function ensureJobCardColumnsExist(): void
+    {
+        try {
+            $missing = [];
+            if (!Schema::hasColumn('job_cards', 'inspection_checklist')) {
+                $missing[] = function ($table) { $table->json('inspection_checklist')->nullable(); };
+            }
+            if (!Schema::hasColumn('job_cards', 'service_reminder_sent_at')) {
+                $missing[] = function ($table) { $table->timestamp('service_reminder_sent_at')->nullable(); };
+            }
+
+            if (!empty($missing)) {
+                Schema::table('job_cards', function ($table) use ($missing) {
+                    foreach ($missing as $callback) {
+                        $callback($table);
+                    }
+                });
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Auto-ensuring job_card columns warning: ' . $e->getMessage());
+        }
+    }
+
     public function index()
     {
         $query = JobCard::with(['customer.user', 'vehicle.brand', 'vehicle.vehicleModel', 'mechanics', 'garage']);
@@ -65,7 +95,9 @@ class JobCardController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
+        $this->ensureJobCardColumnsExist();
         $garageId = \App\Models\Garage::getActiveGarageId();
+        $garage = \App\Models\Garage::find($garageId);
 
         $validated = $request->validate([
             // Customer & Vehicle
@@ -92,6 +124,7 @@ class JobCardController extends Controller
             'amount_paid' => 'nullable|numeric|min:0',
             'discount' => 'nullable|numeric|min:0',
             'coupon_code' => 'nullable|string',
+            'inspection_checklist' => 'nullable|array',
             
             'description' => 'nullable|string',
             
@@ -156,6 +189,13 @@ class JobCardController extends Controller
             return back()->withErrors(['customer_id' => 'Customer and Vehicle are required.']);
         }
 
+        // Next Service Reminder auto-calculation if not explicitly set
+        $nextServiceReminder = $validated['next_service_reminder'] ?? null;
+        if (empty($nextServiceReminder)) {
+            $reminderDays = (int) ($garage?->default_service_reminder_days ?: 90);
+            $nextServiceReminder = Carbon::now()->addDays($reminderDays)->format('Y-m-d');
+        }
+
         // 3. Create Job Card
         $jobCard = JobCard::create([
             'garage_id' => $garageId,
@@ -166,12 +206,13 @@ class JobCardController extends Controller
             'expected_delivery_date' => $validated['expected_delivery_date'] ?? null,
             'priority' => $validated['priority'] ?? 'Medium',
             'status' => $validated['status'] ?? 'listed',
-            'next_service_reminder' => $validated['next_service_reminder'] ?? null,
+            'next_service_reminder' => $nextServiceReminder,
             'vehicle_running_km' => $validated['vehicle_running_km'] ?? null,
             'fuel_range' => $validated['fuel_range'] ?? null,
             'amount_paid' => $validated['amount_paid'] ?? 0,
             'discount' => $validated['discount'] ?? 0,
             'coupon_code' => $validated['coupon_code'] ?? null,
+            'inspection_checklist' => $validated['inspection_checklist'] ?? null,
             'created_by' => auth()->id() ?? 1,
         ]);
 
@@ -338,6 +379,8 @@ class JobCardController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
+        $this->ensureJobCardColumnsExist();
+
         \Log::info('JobCard update request: ', $request->all());
 
         $validated = $request->validate([
@@ -362,6 +405,7 @@ class JobCardController extends Controller
             'amount_paid' => 'nullable|numeric|min:0',
             'discount' => 'nullable|numeric|min:0',
             'coupon_code' => 'nullable|string',
+            'inspection_checklist' => 'nullable|array',
             
             'description' => 'nullable|string',
             
@@ -403,6 +447,7 @@ class JobCardController extends Controller
             'amount_paid' => $validated['amount_paid'] ?? 0,
             'discount' => $validated['discount'] ?? 0,
             'coupon_code' => $validated['coupon_code'] ?? null,
+            'inspection_checklist' => array_key_exists('inspection_checklist', $validated) ? $validated['inspection_checklist'] : $jobCard->inspection_checklist,
         ]);
 
         if (isset($validated['mechanic_ids'])) {

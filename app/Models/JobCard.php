@@ -36,6 +36,14 @@ class JobCard extends Model
         'fuel_range',
         'amount_paid',
         'payment_screenshot_path',
+        'inspection_checklist',
+        'service_reminder_sent_at',
+    ];
+
+    protected $casts = [
+        'inspection_checklist' => 'array',
+        'next_service_reminder' => 'date',
+        'service_reminder_sent_at' => 'datetime',
     ];
 
     public function customer()

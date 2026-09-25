@@ -21,7 +21,14 @@ class Garage extends Model
         'bank_details',
         'upi_id',
         'qr_code_path',
+        'default_service_reminder_days',
+        'google_review_url',
     ];
+
+    public function expenses()
+    {
+        return $this->hasMany(Expense::class);
+    }
 
     public function owner()
     {

@@ -42,6 +42,12 @@ class GarageSettingsController extends Controller
             if (!Schema::hasColumn('garages', 'qr_code_path')) {
                 $missing[] = function ($table) { $table->string('qr_code_path')->nullable(); };
             }
+            if (!Schema::hasColumn('garages', 'default_service_reminder_days')) {
+                $missing[] = function ($table) { $table->integer('default_service_reminder_days')->default(90); };
+            }
+            if (!Schema::hasColumn('garages', 'google_review_url')) {
+                $missing[] = function ($table) { $table->string('google_review_url', 500)->nullable(); };
+            }
 
             if (!empty($missing)) {
                 Schema::table('garages', function ($table) use ($missing) {
@@ -122,15 +128,24 @@ class GarageSettingsController extends Controller
             'remove_logo' => 'nullable|boolean',
             'qr_code' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048', // 2MB max
             'remove_qr_code' => 'nullable|boolean',
+            'default_service_reminder_days' => 'nullable|integer|min:7|max:730',
+            'google_review_url' => 'nullable|url|max:500',
         ], [
             'slug.regex' => 'The custom booking link slug may only contain lowercase letters, numbers, and dashes.',
             'slug.unique' => 'This custom booking link slug is already taken by another garage. Please choose a different one.',
+            'google_review_url.url' => 'Please enter a valid URL (e.g. https://g.page/r/.../review or https://maps.app.goo.gl/...).',
         ]);
 
         try {
             $garage->name = $validated['name'];
             if (isset($validated['slug'])) {
                 $garage->slug = !empty($validated['slug']) ? $validated['slug'] : (\Illuminate\Support\Str::slug($validated['name']) ?: ('garage-' . $garage->id));
+            }
+            if (isset($validated['default_service_reminder_days'])) {
+                $garage->default_service_reminder_days = (int) $validated['default_service_reminder_days'];
+            }
+            if (array_key_exists('google_review_url', $validated)) {
+                $garage->google_review_url = $validated['google_review_url'];
             }
             $garage->tagline = $validated['tagline'] ?? null;
             $garage->address = $validated['address'] ?? null;

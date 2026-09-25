@@ -18,6 +18,8 @@ const form = useForm({
     bank_details: props.garage?.bank_details || '',
     upi_id: props.garage?.upi_id || '',
     header_logo_size: props.garage?.header_logo_size || 32,
+    default_service_reminder_days: props.garage?.default_service_reminder_days || 90,
+    google_review_url: props.garage?.google_review_url || '',
     logo: null,
     remove_logo: false,
     qr_code: null,
@@ -245,6 +247,53 @@ const submit = () => {
                         <div class="mt-4 pt-3 border-t border-orange-200/60 text-xs text-orange-900/80 flex items-start gap-2">
                             <span class="text-sm">💡</span>
                             <span><strong>Pro-Tip:</strong> Paste this URL on your workshop's Google Business Profile under "Appointment Link" and on your WhatsApp Business description to attract direct online customer bookings!</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer Communication & Service Reminders -->
+                <div class="space-y-6 pt-8">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 font-bold text-sm">🔔</span>
+                            <h3 class="text-lg font-bold leading-6 text-gray-900">Service Reminders & Google Reviews</h3>
+                        </div>
+                        <p class="mt-1 text-sm text-gray-500">Configure recurring service reminder timing and your workshop's Google Maps review link.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                        <!-- Reminder Interval -->
+                        <div class="sm:col-span-3">
+                            <label class="block text-sm font-medium text-gray-700">Default Next Service Reminder (Days)</label>
+                            <div class="mt-1 flex rounded-md shadow-sm">
+                                <input
+                                    type="number"
+                                    min="7"
+                                    max="730"
+                                    v-model.number="form.default_service_reminder_days"
+                                    class="flex-1 min-w-0 block w-full px-3 py-2 rounded-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm font-semibold"
+                                />
+                            </div>
+                            <div class="mt-2 flex flex-wrap gap-1.5">
+                                <button type="button" @click="form.default_service_reminder_days = 90" :class="form.default_service_reminder_days === 90 ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'" class="px-2 py-0.5 rounded text-xs font-semibold transition">90 Days (3 Mo)</button>
+                                <button type="button" @click="form.default_service_reminder_days = 120" :class="form.default_service_reminder_days === 120 ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'" class="px-2 py-0.5 rounded text-xs font-semibold transition">120 Days (4 Mo)</button>
+                                <button type="button" @click="form.default_service_reminder_days = 180" :class="form.default_service_reminder_days === 180 ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'" class="px-2 py-0.5 rounded text-xs font-semibold transition">180 Days (6 Mo)</button>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">Auto-sets the customer's next service due date when closing a Job Card.</p>
+                            <p v-if="form.errors.default_service_reminder_days" class="text-xs text-rose-600 mt-1">{{ form.errors.default_service_reminder_days }}</p>
+                        </div>
+
+                        <!-- Google Review URL -->
+                        <div class="sm:col-span-3">
+                            <label class="block text-sm font-medium text-gray-700">Google Maps Review Link</label>
+                            <input
+                                type="url"
+                                v-model="form.google_review_url"
+                                placeholder="https://g.page/r/.../review or https://maps.app.goo.gl/..."
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm font-mono text-xs"
+                            />
+                            <p class="mt-1 text-xs text-gray-500">Allows sending a 1-click WhatsApp message asking happy customers for a 5-star Google review!</p>
+                            <p v-if="form.errors.google_review_url" class="text-xs text-rose-600 mt-1">{{ form.errors.google_review_url }}</p>
                         </div>
                     </div>
                 </div>

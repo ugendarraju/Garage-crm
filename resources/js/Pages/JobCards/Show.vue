@@ -4,6 +4,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { format } from 'date-fns';
 import WhatsAppModal from '@/Components/WhatsAppModal.vue';
+import InspectionChecklist from '@/Components/InspectionChecklist.vue';
 
 const props = defineProps({
     jobCard: Object,
@@ -116,7 +117,12 @@ const formatLicensePlate = (plate) => {
                                     </p>
                                 </div>
                                 <div>
-                                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Vehicle</p>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Vehicle</p>
+                                        <Link v-if="jobCard.vehicle_id" :href="route('vehicles.show', jobCard.vehicle_id)" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                                            <span>📜 Service History</span>
+                                        </Link>
+                                    </div>
                                     <div class="flex items-center gap-2 mb-1">
                                         <div class="inline-flex items-center bg-white border border-gray-300 rounded shadow-sm overflow-hidden">
                                             <div class="bg-[#1a56db] flex flex-col items-center justify-center px-2 py-1.5 text-white">
@@ -176,7 +182,13 @@ const formatLicensePlate = (plate) => {
                             </div>
                         </div>
 
-
+                        <!-- Vehicle Intake Inspection Checklist -->
+                        <InspectionChecklist
+                            v-if="jobCard.inspection_checklist"
+                            :model-value="jobCard.inspection_checklist"
+                            :readonly="true"
+                            class="mb-6"
+                        />
 
                         <!-- Services & Parts -->
                         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
