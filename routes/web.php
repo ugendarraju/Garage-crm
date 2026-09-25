@@ -120,6 +120,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/settings', [\App\Http\Controllers\SuperAdmin\SystemSettingsController::class, 'edit'])->name('admin.settings.index');
     Route::post('/admin/settings', [\App\Http\Controllers\SuperAdmin\SystemSettingsController::class, 'update'])->name('admin.settings.update');
 
+    // Super Admin System Backups & Restoration
+    Route::get('/admin/backups', [\App\Http\Controllers\SuperAdmin\BackupController::class, 'index'])->name('admin.backups.index');
+    Route::post('/admin/backups', [\App\Http\Controllers\SuperAdmin\BackupController::class, 'store'])->name('admin.backups.store');
+    Route::get('/admin/backups/{filename}/download', [\App\Http\Controllers\SuperAdmin\BackupController::class, 'download'])->name('admin.backups.download');
+    Route::post('/admin/backups/restore', [\App\Http\Controllers\SuperAdmin\BackupController::class, 'restore'])->name('admin.backups.restore');
+    Route::post('/admin/backups/upload', [\App\Http\Controllers\SuperAdmin\BackupController::class, 'upload'])->name('admin.backups.upload');
+    Route::delete('/admin/backups/{filename}', [\App\Http\Controllers\SuperAdmin\BackupController::class, 'destroy'])->name('admin.backups.destroy');
+    Route::post('/admin/backups/schedule', [\App\Http\Controllers\SuperAdmin\BackupController::class, 'updateSchedule'])->name('admin.backups.schedule');
+
     // Interactive User Guide & Help Center
     Route::get('/user-guide', [\App\Http\Controllers\UserGuideController::class, 'index'])->name('user-guide');
 });

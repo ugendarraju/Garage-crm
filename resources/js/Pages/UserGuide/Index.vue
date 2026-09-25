@@ -21,9 +21,13 @@ const categories = [
     { id: 'staff', name: '🧑‍🔧 Staff & Mechanics' },
     { id: 'bookings', name: '📅 Online Bookings' },
     { id: 'ai', name: '🤖 AI Assistant' },
+    { id: 'admin', name: '👑 Master Admin & Backups' },
 ];
 
 const quickSearchTags = [
+    'System backups',
+    'Restore garage',
+    'Automated backup',
     'Service reminders',
     'Expense tracker',
     'Vehicle logbook',
@@ -44,6 +48,24 @@ const quickSearchTags = [
 ];
 
 const guides = [
+    {
+        id: 'master-backups-restore',
+        category: 'admin',
+        title: 'Master Dashboard: Automated Backups & Single-Garage Disaster Recovery',
+        summary: 'Configure 2-week automated backups, download portable ZIP archives, and restore a single garage without affecting any other tenant.',
+        keywords: ['backups', 'system backups', 'restore garage', 'backup zip', 'disaster recovery', 'automated backup', 'master dashboard', 'super admin', 'biweekly backup'],
+        actionRoute: 'admin.backups.index',
+        actionText: 'Open System Backups',
+        steps: [
+            'Access Master Dashboard: As a Super Admin (ensure you are not impersonating a specific garage), click **System Backups** in the left sidebar menu.',
+            'Configure Automated Schedule: Under **Automated Backup Schedule**, select your frequency (e.g. **Every 2 Weeks (1st & 15th)** or **Monthly**) and set retention limit (e.g. keep last 5 backups) → Click **Save Settings**.',
+            'Take Manual Backups: Click **⚡ Create Full Backup** for a complete system snapshot across all garages, or click **🏢 Backup Single Garage** to bundle only a specific workshop.',
+            'Download Backups: In the Available Backups table, click **📥 Download** to save the timestamped `.zip` bundle to your computer for off-site disaster recovery.',
+            'Selective Single-Garage Restore: If a garage experiences accidental data loss or corruption, click **🔄 Restore** beside any backup archive → Choose **Single Garage Only** → Pick the target garage → Confirm.',
+            'Tenant Safety Guarantee: The restore engine runs in a database transaction, refreshing only the chosen garage\'s database records and upload files. All other garages on your server remain 100% live and completely untouched!'
+        ],
+        tip: 'Keeping 2-week automated backups turned on ensures zero data loss while our automatic retention pruner prevents server storage from ever filling up.'
+    },
     {
         id: 'service-reminders',
         category: 'job_cards',
