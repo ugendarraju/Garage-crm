@@ -18,7 +18,7 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/book', [\App\Http\Controllers\ServiceRequestController::class, 'create'])->name('service-requests.create');
+Route::get('/book/{slug?}', [\App\Http\Controllers\ServiceRequestController::class, 'create'])->name('service-requests.create');
 Route::post('/book', [\App\Http\Controllers\ServiceRequestController::class, 'store'])->name('service-requests.store');
 
 Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');

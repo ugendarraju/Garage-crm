@@ -9,11 +9,23 @@ use Inertia\Inertia;
 class ServiceRequestController extends Controller
 {
     // Public: Show the booking form
-    public function create()
+    public function create(Request $request, $slug = null)
     {
         $brands = \App\Models\VehicleBrand::all();
         $models = \App\Models\VehicleModel::all();
-        $garages = \App\Models\Garage::where('is_active', true)->get(['id', 'name']);
+        $garages = \App\Models\Garage::where('is_active', true)->get(['id', 'name', 'slug']);
+
+        $identifier = $slug ?? $request->query('garage') ?? $request->query('garage_id');
+        $selectedGarage = null;
+        if ($identifier) {
+            $selectedGarage = \App\Models\Garage::where('is_active', true)
+                ->where(function ($q) use ($identifier) {
+                    $q->where('slug', $identifier);
+                    if (is_numeric($identifier)) {
+                        $q->orWhere('id', (int) $identifier);
+                    }
+                })->first(['id', 'name', 'slug', 'tagline', 'address', 'phone', 'logo_path']);
+        }
 
         $user = auth()->user();
         $isCustomer = $user && $user->role === 'customer';
@@ -27,6 +39,7 @@ class ServiceRequestController extends Controller
             'brands' => $brands,
             'models' => $models,
             'garages' => $garages,
+            'selectedGarage' => $selectedGarage,
             'isCustomer' => $isCustomer,
             'customerVehicles' => $customerVehicles,
             'customerDetails' => $isCustomer ? [

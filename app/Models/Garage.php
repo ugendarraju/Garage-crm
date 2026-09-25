@@ -8,6 +8,7 @@ class Garage extends Model
 {
     protected $fillable = [
         'name',
+        'slug',
         'tagline',
         'address',
         'phone',

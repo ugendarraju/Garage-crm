@@ -6,13 +6,14 @@ const props = defineProps({
     brands: Array,
     models: Array,
     garages: Array,
+    selectedGarage: Object,
     isCustomer: Boolean,
     customerVehicles: Array,
     customerDetails: Object,
 });
 
 const form = useForm({
-    garage_id: '',
+    garage_id: props.selectedGarage?.id || '',
     customer_name: props.customerDetails?.name || '',
     email: props.customerDetails?.email || '',
     phone: props.customerDetails?.phone || '',
@@ -64,28 +65,58 @@ const submit = () => {
         forceFormData: true,
         onSuccess: () => {
             form.reset();
+            if (props.selectedGarage?.id) {
+                form.garage_id = props.selectedGarage.id;
+            }
         }
     });
 };
 </script>
 
 <template>
-    <Head title="Book a Service" />
+    <Head :title="props.selectedGarage ? `Book a Service - ${props.selectedGarage.name}` : 'Book a Service'" />
     <div class="relative min-h-screen bg-gray-50 flex items-center justify-center p-6 dark:bg-zinc-900">
         <div class="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent"></div>
         
         <div class="relative z-10 w-full max-w-2xl bg-white dark:bg-zinc-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-zinc-700">
             
             <div class="text-center mb-8">
-                <Link href="/">
-                    <div class="inline-flex bg-orange-500 p-3 rounded-xl shadow-lg shadow-orange-500/30 mb-4 cursor-pointer hover:bg-orange-600 transition">
+                <!-- Garage Branded Header (When garage is specified) -->
+                <div v-if="props.selectedGarage" class="mb-4">
+                    <div v-if="props.selectedGarage.logo_path" class="inline-block p-2 bg-white dark:bg-zinc-700 rounded-2xl shadow-md border border-gray-200 dark:border-zinc-600 mb-3">
+                        <img :src="`/storage/${props.selectedGarage.logo_path}`" :alt="props.selectedGarage.name" class="h-16 w-auto max-w-[200px] object-contain rounded-xl" />
+                    </div>
+                    <div v-else class="inline-flex bg-orange-500 p-3.5 rounded-2xl shadow-lg shadow-orange-500/30 mb-3">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
                     </div>
-                </Link>
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Book a Service</h1>
-                <p class="text-gray-500 dark:text-gray-400 mt-2">Fill in your details and we will schedule your appointment.</p>
+                    <div>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800">
+                            <svg class="w-3.5 h-3.5 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
+                            Direct Workshop Booking
+                        </span>
+                    </div>
+                    <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white mt-2">{{ props.selectedGarage.name }}</h1>
+                    <p v-if="props.selectedGarage.tagline" class="text-sm font-semibold text-orange-600 dark:text-orange-400 mt-1">{{ props.selectedGarage.tagline }}</p>
+                    <p v-if="props.selectedGarage.address" class="text-xs text-gray-500 dark:text-gray-400 mt-1.5 max-w-md mx-auto">{{ props.selectedGarage.address }}</p>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Fill in your details below and we will schedule your vehicle appointment.</p>
+                </div>
+
+                <!-- Generic Header (When no specific garage is passed) -->
+                <div v-else>
+                    <Link href="/">
+                        <div class="inline-flex bg-orange-500 p-3 rounded-xl shadow-lg shadow-orange-500/30 mb-4 cursor-pointer hover:bg-orange-600 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                        </div>
+                    </Link>
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Book a Service</h1>
+                    <p class="text-gray-500 dark:text-gray-400 mt-2">Fill in your details and we will schedule your appointment.</p>
+                </div>
             </div>
 
             <div v-if="$page.props.flash.success" class="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 p-6 rounded-2xl text-center border border-green-200 dark:border-green-800">
@@ -98,7 +129,8 @@ const submit = () => {
             </div>
 
             <form v-else @submit.prevent="submit" class="space-y-6">
-                <div class="mb-6">
+                <!-- Select Garage: Only shown if no garage is pre-selected -->
+                <div v-if="!props.selectedGarage" class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Select Garage</label>
                     <select v-model="form.garage_id" required class="w-full rounded-xl border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 dark:bg-zinc-900 dark:border-zinc-700 dark:text-white">
                         <option value="" disabled>Choose a garage...</option>

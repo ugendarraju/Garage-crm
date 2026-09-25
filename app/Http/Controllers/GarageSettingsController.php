@@ -18,6 +18,9 @@ class GarageSettingsController extends Controller
     {
         try {
             $missing = [];
+            if (!Schema::hasColumn('garages', 'slug')) {
+                $missing[] = function ($table) { $table->string('slug')->nullable()->unique(); };
+            }
             if (!Schema::hasColumn('garages', 'tagline')) {
                 $missing[] = function ($table) { $table->string('tagline')->nullable(); };
             }
@@ -66,9 +69,25 @@ class GarageSettingsController extends Controller
 
         $activeGarageId = Garage::getActiveGarageId();
         $garage = $activeGarageId ? Garage::find($activeGarageId) : null;
+
+        // Auto-ensure slug exists for this garage
+        if ($garage && empty($garage->slug) && !empty($garage->name)) {
+            $baseSlug = \Illuminate\Support\Str::slug($garage->name) ?: ('garage-' . $garage->id);
+            $slug = $baseSlug;
+            $count = 1;
+            while (Garage::where('slug', $slug)->where('id', '!=', $garage->id)->exists()) {
+                $slug = "{$baseSlug}-{$count}";
+                $count++;
+            }
+            $garage->slug = $slug;
+            $garage->save();
+        }
+
+        $bookingUrl = $garage && $garage->slug ? url('/book/' . $garage->slug) : url('/book');
         
         return Inertia::render('Settings/Edit', [
-            'garage' => $garage
+            'garage' => $garage,
+            'bookingUrl' => $bookingUrl,
         ]);
     }
 
@@ -84,8 +103,15 @@ class GarageSettingsController extends Controller
             return redirect()->back()->with('error', 'No active garage selected. Please choose a garage first.');
         }
 
+        if ($request->filled('slug')) {
+            $request->merge([
+                'slug' => \Illuminate\Support\Str::slug($request->slug)
+            ]);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:60|regex:/^[a-z0-9\-]+$/|unique:garages,slug,' . $garage->id,
             'tagline' => 'nullable|string|max:255',
             'address' => 'nullable|string',
             'gst_number' => 'nullable|string|max:100',
@@ -96,10 +122,16 @@ class GarageSettingsController extends Controller
             'remove_logo' => 'nullable|boolean',
             'qr_code' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048', // 2MB max
             'remove_qr_code' => 'nullable|boolean',
+        ], [
+            'slug.regex' => 'The custom booking link slug may only contain lowercase letters, numbers, and dashes.',
+            'slug.unique' => 'This custom booking link slug is already taken by another garage. Please choose a different one.',
         ]);
 
         try {
             $garage->name = $validated['name'];
+            if (isset($validated['slug'])) {
+                $garage->slug = !empty($validated['slug']) ? $validated['slug'] : (\Illuminate\Support\Str::slug($validated['name']) ?: ('garage-' . $garage->id));
+            }
             $garage->tagline = $validated['tagline'] ?? null;
             $garage->address = $validated['address'] ?? null;
             $garage->gst_number = $validated['gst_number'] ?? null;
