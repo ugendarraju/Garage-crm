@@ -31,7 +31,7 @@ class SecurityHeaders
         $response->headers->set('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=()');
 
         // Content Security Policy
-        $csp = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.bunny.net; font-src 'self' https://fonts.bunny.net data:; img-src 'self' data: blob: https:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'self';";
+        $csp = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; font-src 'self' data: https:; img-src 'self' data: blob: https:; connect-src 'self' https:; frame-ancestors 'self';";
         $response->headers->set('Content-Security-Policy', $csp);
 
         return $response;
