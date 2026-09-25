@@ -24,8 +24,10 @@ const categories = [
 ];
 
 const quickSearchTags = [
+    'WhatsApp alerts',
     'Customer portal',
     'Book online',
+    'Smartphone camera',
     'Track vehicle',
     'UPI QR code',
     'Add customer',
@@ -186,20 +188,38 @@ const guides = [
     {
         id: 'online-service-bookings',
         category: 'bookings',
-        title: 'How to Accept Online Bookings (Service Requests)',
-        summary: 'Manage online vehicle appointment requests booked by customers from your public booking portal.',
-        keywords: ['online booking', 'service requests', 'appointment', 'book service', 'approve request', 'public booking'],
-        actionRoute: 'service-requests.index',
-        actionText: 'View Service Requests',
+        title: 'Custom Booking Links & Direct Smartphone Camera Photos',
+        summary: 'Share your personalized workshop link (/book/your-garage) and let customers snap live camera photos of vehicle issues.',
+        keywords: ['online booking', 'custom link', 'booking slug', 'camera photo', 'service requests', 'appointment', 'direct booking', 'smartphone camera'],
+        actionRoute: 'settings.edit',
+        actionText: 'Configure Booking Link',
         steps: [
-            'Customers visit your public booking page (`/book`) and submit their vehicle details, requested date, and issue description.',
-            'New requests appear immediately under **Service Requests** in your sidebar.',
-            'Click **Service Requests** to view pending requests.',
-            'Review the customer\'s preferred date and vehicle model.',
-            'Click **Approve**: The system automatically converts the booking into a new Job Card with customer and vehicle details pre-filled!',
-            'If you are fully booked, click **Decline** and specify a reason.'
+            'Go to **Settings** in the left sidebar menu.',
+            'Locate the **Direct Customer Booking Link** section to view or customize your branded link slug (e.g. `/book/mechonwheels`).',
+            'Use the **Copy Link** or **WhatsApp** share buttons to distribute your booking URL on social media, Google Business profile, or customer chats.',
+            'When customers open your custom link, your workshop branding is displayed and the "Select Garage" dropdown is automatically hidden.',
+            'Customers can tap **📸 Take Photo (Camera)** to launch their smartphone camera directly and snap live photos of vehicle scratches, noises, or broken parts.',
+            'Incoming bookings appear immediately in **Service Requests** for 1-click approval into a new Job Card!'
         ],
-        tip: 'Share your booking link (`https://cubestack.in/mow/book`) on your WhatsApp Business profile and Google Maps listing to attract online customers!'
+        tip: 'Put your custom link in your Google Maps Business profile under "Appointment Link" to get direct customer appointments 24/7.'
+    },
+    {
+        id: 'whatsapp-alerts',
+        category: 'job_cards',
+        title: 'How to Send Instant WhatsApp Updates & Pickup Alerts to Customers',
+        summary: 'Send 1-click WhatsApp alerts on phone or PC for vehicle ready for pickup, job in progress, and invoice links with zero ban risk.',
+        keywords: ['whatsapp', 'whatsapp alert', 'ready for pickup', 'send message', 'whatsapp update', 'customer notification', 'phone alert'],
+        actionRoute: 'job-cards.index',
+        actionText: 'View Job Cards',
+        steps: [
+            'Go to **Job Cards** in the sidebar or open any individual Job Card.',
+            'Click the green **WhatsApp Customer** button (or the WhatsApp icon next to the customer\'s mobile number).',
+            'Select your desired message template: **🚗 Ready for Pickup**, **🔧 In Progress**, **🧾 Invoice Link**, or **📋 Estimate**.',
+            'Review or edit the message text directly in the preview box (customer name, vehicle registration, final bill amount, and workshop address are filled in automatically).',
+            'Click **Open in WhatsApp**.',
+            'On your smartphone, this immediately launches your official WhatsApp app with the recipient and message pre-filled. Simply tap **Send**!'
+        ],
+        tip: 'Because messages are sent directly from your own WhatsApp application, there is 100% zero risk of API bans, zero setup required, and zero extra costs!'
     },
     {
         id: 'customer-portal',

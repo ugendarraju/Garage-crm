@@ -14,7 +14,7 @@ class JobCardController extends Controller
 {
     public function index()
     {
-        $query = JobCard::with(['customer.user', 'vehicle.brand', 'vehicle.vehicleModel', 'mechanics']);
+        $query = JobCard::with(['customer.user', 'vehicle.brand', 'vehicle.vehicleModel', 'mechanics', 'garage']);
 
         if (auth()->user()->role === 'customer') {
             $customerProfile = auth()->user()->customerProfile;
@@ -253,7 +253,7 @@ class JobCardController extends Controller
             }
         }
 
-        $jobCard->load(['customer.user', 'vehicle.brand', 'vehicle.vehicleModel', 'items', 'issues', 'createdBy', 'mechanics']);
+        $jobCard->load(['customer.user', 'vehicle.brand', 'vehicle.vehicleModel', 'items', 'issues', 'createdBy', 'mechanics', 'garage']);
         return Inertia::render('JobCards/Show', [
             'jobCard' => $jobCard
         ]);
