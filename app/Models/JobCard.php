@@ -40,11 +40,32 @@ class JobCard extends Model
         'service_reminder_sent_at',
     ];
 
-    protected $casts = [
-        'inspection_checklist' => 'array',
-        'next_service_reminder' => 'date',
-        'service_reminder_sent_at' => 'datetime',
-    ];
+    public function getInspectionChecklistAttribute($value)
+    {
+        if (empty($value)) return null;
+        if (is_array($value)) return $value;
+        $decoded = json_decode($value, true);
+        return is_array($decoded) ? $decoded : null;
+    }
+
+    public function setInspectionChecklistAttribute($value)
+    {
+        if (empty($value)) {
+            $this->attributes['inspection_checklist'] = null;
+        } elseif (is_string($value)) {
+            $this->attributes['inspection_checklist'] = $value;
+        } else {
+            $this->attributes['inspection_checklist'] = json_encode($value);
+        }
+    }
+
+    public function getNextServiceReminderAttribute($value)
+    {
+        if (empty($value) || $value === '0000-00-00') {
+            return null;
+        }
+        return is_string($value) ? substr($value, 0, 10) : $value;
+    }
 
     public function customer()
     {

@@ -9,6 +9,7 @@ use App\Http\Requests\StoreVehicleRequest;
 use App\Http\Requests\UpdateVehicleRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Services\DatabaseSchemaAutoFixService;
 
 class VehicleController extends Controller
 {
@@ -17,6 +18,8 @@ class VehicleController extends Controller
      */
     public function index(Request $request)
     {
+        DatabaseSchemaAutoFixService::ensureSchemaIsUpToDate();
+
         $garageId = Garage::getActiveGarageId();
         $isCustomer = auth()->user()->role === 'customer';
 
@@ -115,6 +118,8 @@ class VehicleController extends Controller
      */
     public function show(Vehicle $vehicle)
     {
+        DatabaseSchemaAutoFixService::ensureSchemaIsUpToDate();
+
         $garageId = Garage::getActiveGarageId();
         $isCustomer = auth()->user()->role === 'customer';
 

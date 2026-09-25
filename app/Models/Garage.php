@@ -46,7 +46,7 @@ class Garage extends Model
             return session('active_garage_id');
         }
         
-        if (auth()->check() && auth()->user()->role === 'owner') {
+        if (auth()->check() && auth()->user()->garage_id) {
             return auth()->user()->garage_id;
         }
 

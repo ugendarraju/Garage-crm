@@ -13,37 +13,14 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use App\Services\DatabaseSchemaAutoFixService;
 
 class JobCardController extends Controller
 {
-    /**
-     * Ensure missing columns exist in job_cards table automatically.
-     */
-    private function ensureJobCardColumnsExist(): void
-    {
-        try {
-            $missing = [];
-            if (!Schema::hasColumn('job_cards', 'inspection_checklist')) {
-                $missing[] = function ($table) { $table->json('inspection_checklist')->nullable(); };
-            }
-            if (!Schema::hasColumn('job_cards', 'service_reminder_sent_at')) {
-                $missing[] = function ($table) { $table->timestamp('service_reminder_sent_at')->nullable(); };
-            }
-
-            if (!empty($missing)) {
-                Schema::table('job_cards', function ($table) use ($missing) {
-                    foreach ($missing as $callback) {
-                        $callback($table);
-                    }
-                });
-            }
-        } catch (\Throwable $e) {
-            Log::warning('Auto-ensuring job_card columns warning: ' . $e->getMessage());
-        }
-    }
-
     public function index()
     {
+        DatabaseSchemaAutoFixService::ensureSchemaIsUpToDate();
+
         $query = JobCard::with(['customer.user', 'vehicle.brand', 'vehicle.vehicleModel', 'mechanics', 'garage']);
 
         if (auth()->user()->role === 'customer') {
@@ -95,7 +72,7 @@ class JobCardController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
-        $this->ensureJobCardColumnsExist();
+        DatabaseSchemaAutoFixService::ensureSchemaIsUpToDate();
         $garageId = \App\Models\Garage::getActiveGarageId();
         $garage = \App\Models\Garage::find($garageId);
 
@@ -206,7 +183,7 @@ class JobCardController extends Controller
             'expected_delivery_date' => $validated['expected_delivery_date'] ?? null,
             'priority' => $validated['priority'] ?? 'Medium',
             'status' => $validated['status'] ?? 'listed',
-            'next_service_reminder' => $nextServiceReminder,
+            'next_service_reminder' => !empty($nextServiceReminder) ? $nextServiceReminder : null,
             'vehicle_running_km' => $validated['vehicle_running_km'] ?? null,
             'fuel_range' => $validated['fuel_range'] ?? null,
             'amount_paid' => $validated['amount_paid'] ?? 0,
@@ -379,7 +356,7 @@ class JobCardController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
-        $this->ensureJobCardColumnsExist();
+        DatabaseSchemaAutoFixService::ensureSchemaIsUpToDate();
 
         \Log::info('JobCard update request: ', $request->all());
 
@@ -441,7 +418,7 @@ class JobCardController extends Controller
             'expected_delivery_date' => $validated['expected_delivery_date'] ?? null,
             'priority' => $validated['priority'] ?? 'Medium',
             'status' => $validated['status'] ?? 'listed',
-            'next_service_reminder' => $validated['next_service_reminder'] ?? null,
+            'next_service_reminder' => !empty($validated['next_service_reminder']) ? $validated['next_service_reminder'] : null,
             'vehicle_running_km' => $validated['vehicle_running_km'] ?? null,
             'fuel_range' => $validated['fuel_range'] ?? null,
             'amount_paid' => $validated['amount_paid'] ?? 0,
