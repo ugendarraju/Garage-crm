@@ -65,7 +65,7 @@ class ServiceRequestController extends Controller
             'fuel_range' => 'nullable|string',
             'issues' => 'required|array|min:1',
             'issues.*.description' => 'required|string',
-            'issues.*.image' => 'nullable|image|max:5120',
+            'issues.*.image' => 'nullable|image|max:15360',
         ]);
 
         // Check if existing user

@@ -29,13 +29,43 @@ const form = useForm({
 });
 
 const addIssue = () => {
-    form.issues.push({ description: '', image: null });
+    form.issues.push({ description: '', image: null, previewUrl: null });
+};
+
+const handleImageSelect = (e, issue) => {
+    const file = e.target.files?.[0];
+    if (file) {
+        if (issue.previewUrl) {
+            URL.revokeObjectURL(issue.previewUrl);
+        }
+        issue.image = file;
+        issue.previewUrl = URL.createObjectURL(file);
+    }
+    e.target.value = '';
+};
+
+const removeImage = (issue) => {
+    if (issue.previewUrl) {
+        URL.revokeObjectURL(issue.previewUrl);
+    }
+    issue.image = null;
+    issue.previewUrl = null;
 };
 
 const removeIssue = (index) => {
     if (form.issues.length > 1) {
+        if (form.issues[index]?.previewUrl) {
+            URL.revokeObjectURL(form.issues[index].previewUrl);
+        }
         form.issues.splice(index, 1);
     }
+};
+
+const formatFileSize = (bytes) => {
+    if (!bytes) return '';
+    const kb = bytes / 1024;
+    if (kb < 1024) return `${Math.round(kb)} KB`;
+    return `${(kb / 1024).toFixed(1)} MB`;
 };
 
 const handleVehicleSelect = () => {
@@ -64,6 +94,11 @@ const submit = () => {
         preserveScroll: true,
         forceFormData: true,
         onSuccess: () => {
+            form.issues.forEach(issue => {
+                if (issue.previewUrl) {
+                    URL.revokeObjectURL(issue.previewUrl);
+                }
+            });
             form.reset();
             if (props.selectedGarage?.id) {
                 form.garage_id = props.selectedGarage.id;
@@ -268,9 +303,106 @@ const submit = () => {
                                     <div v-if="form.errors[`issues.${index}.description`]" class="text-red-500 text-sm mt-1">{{ form.errors[`issues.${index}.description`] }}</div>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Attach Image (Optional)</label>
-                                    <input type="file" accept="image/*" @change="e => issue.image = e.target.files[0]" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 dark:file:bg-orange-900/30 dark:file:text-orange-400 dark:text-gray-400" />
-                                    <div v-if="form.errors[`issues.${index}.image`]" class="text-red-500 text-sm mt-1">{{ form.errors[`issues.${index}.image`] }}</div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                        Attach Photo (Optional)
+                                    </label>
+
+                                    <!-- Hidden Inputs: Camera direct capture and Gallery picker -->
+                                    <input
+                                        :id="`camera-input-${index}`"
+                                        type="file"
+                                        accept="image/*"
+                                        capture="environment"
+                                        class="sr-only"
+                                        @change="e => handleImageSelect(e, issue)"
+                                    />
+                                    <input
+                                        :id="`gallery-input-${index}`"
+                                        type="file"
+                                        accept="image/*"
+                                        class="sr-only"
+                                        @change="e => handleImageSelect(e, issue)"
+                                    />
+
+                                    <!-- When Photo is Attached: Show Preview Card -->
+                                    <div v-if="issue.previewUrl" class="flex items-center gap-3 p-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl shadow-sm">
+                                        <div class="relative shrink-0">
+                                            <img
+                                                :src="issue.previewUrl"
+                                                alt="Issue photo preview"
+                                                class="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border border-gray-200 dark:border-zinc-700"
+                                            />
+                                        </div>
+
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                                    <svg class="w-3 h-3 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    Photo Ready
+                                                </span>
+                                                <span v-if="issue.image?.size" class="text-[11px] text-gray-500 font-mono">
+                                                    {{ formatFileSize(issue.image.size) }}
+                                                </span>
+                                            </div>
+                                            <p class="text-xs text-gray-600 dark:text-gray-400 truncate mt-1">
+                                                {{ issue.image?.name || 'Camera photo' }}
+                                            </p>
+                                            
+                                            <!-- Retake / Change / Remove Controls -->
+                                            <div class="flex items-center gap-3 mt-1.5 text-xs">
+                                                <label :for="`camera-input-${index}`" class="text-orange-600 hover:text-orange-700 dark:text-orange-400 font-semibold cursor-pointer flex items-center gap-1">
+                                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                                        <circle cx="12" cy="13" r="3" stroke-width="2" />
+                                                    </svg>
+                                                    Retake
+                                                </label>
+                                                <span class="text-gray-300 dark:text-zinc-600">•</span>
+                                                <label :for="`gallery-input-${index}`" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 font-semibold cursor-pointer">
+                                                    Choose Other
+                                                </label>
+                                                <span class="text-gray-300 dark:text-zinc-600">•</span>
+                                                <button type="button" @click="removeImage(issue)" class="text-rose-600 hover:text-rose-700 dark:text-rose-400 font-semibold inline-flex items-center gap-0.5">
+                                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                    Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- When No Photo is Attached: Direct Camera & Gallery Buttons -->
+                                    <div v-else class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                        <!-- Camera Button -->
+                                        <label
+                                            :for="`camera-input-${index}`"
+                                            class="flex-1 inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-orange-50 hover:bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300 dark:hover:bg-orange-900/50 border border-orange-200 dark:border-orange-800 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer shadow-sm transition-all active:scale-95 text-center select-none"
+                                        >
+                                            <svg class="w-4 h-4 text-orange-600 dark:text-orange-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                                <circle cx="12" cy="13" r="3" stroke-width="2" />
+                                            </svg>
+                                            <span>Take Photo (Camera)</span>
+                                        </label>
+
+                                        <!-- Gallery / File Upload Button -->
+                                        <label
+                                            :for="`gallery-input-${index}`"
+                                            class="flex-1 inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-white hover:bg-gray-50 text-gray-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-gray-200 border border-gray-300 dark:border-zinc-700 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer shadow-sm transition-all active:scale-95 text-center select-none"
+                                        >
+                                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            <span>From Gallery</span>
+                                        </label>
+                                    </div>
+
+                                    <div v-if="form.errors[`issues.${index}.image`]" class="text-red-500 text-xs mt-1.5">
+                                        {{ form.errors[`issues.${index}.image`] }}
+                                    </div>
                                 </div>
                             </div>
                         </div>
