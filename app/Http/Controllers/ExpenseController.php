@@ -6,43 +6,16 @@ use App\Models\Expense;
 use App\Models\JobCard;
 use App\Models\PurchaseInvoice;
 use App\Models\Garage;
+use App\Services\DatabaseSchemaAutoFixService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class ExpenseController extends Controller
 {
-    /**
-     * Ensure expenses table exists automatically.
-     */
-    private function ensureExpensesTableExists(): void
-    {
-        try {
-            if (!Schema::hasTable('expenses')) {
-                Schema::create('expenses', function ($table) {
-                    $table->id();
-                    $table->foreignId('garage_id')->constrained('garages')->cascadeOnDelete();
-                    $table->string('category')->default('other');
-                    $table->string('title');
-                    $table->decimal('amount', 12, 2);
-                    $table->string('payment_method')->default('cash');
-                    $table->date('expense_date');
-                    $table->string('receipt_path')->nullable();
-                    $table->text('notes')->nullable();
-                    $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
-                    $table->timestamps();
-
-                    $table->index(['garage_id', 'expense_date']);
-                    $table->index(['garage_id', 'category']);
-                });
-            }
-        } catch (\Throwable $e) {
-            Log::warning('Auto-ensuring expenses table warning: ' . $e->getMessage());
-        }
-    }
-
     /**
      * Restrict access strictly to Garage Owner and Super Admin.
      */
@@ -56,7 +29,7 @@ class ExpenseController extends Controller
     public function index(Request $request)
     {
         $this->checkOwnerAccess();
-        $this->ensureExpensesTableExists();
+        DatabaseSchemaAutoFixService::ensureSchemaIsUpToDate();
 
         $garageId = Garage::getActiveGarageId();
 
@@ -80,53 +53,72 @@ class ExpenseController extends Controller
             $range = 'this_month';
         }
 
-        // 1. Invoiced Workshop Revenue from completed Job Cards
-        $revenue = (float) JobCard::where('garage_id', $garageId)
-            ->whereDate('created_at', '>=', $startDate)
-            ->whereDate('created_at', '<=', $endDate)
-            ->whereNotIn('status', ['scheduled']) // exclude draft estimates
-            ->sum('final_total');
+        $revenue = 0.0;
+        $partsCost = 0.0;
+        $operatingExpenses = 0.0;
+        $grossProfit = 0.0;
+        $netProfit = 0.0;
+        $netProfitMargin = 0.0;
+        $categoryBreakdown = [];
+        $expenses = new LengthAwarePaginator([], 0, 25);
 
-        // 2. Parts / COGS from Purchase Invoices
-        $partsCost = (float) PurchaseInvoice::where('garage_id', $garageId)
-            ->whereDate('purchase_date', '>=', $startDate)
-            ->whereDate('purchase_date', '<=', $endDate)
-            ->sum('total_amount');
+        try {
+            // 1. Invoiced Workshop Revenue from completed Job Cards
+            if (Schema::hasTable('job_cards')) {
+                $revenue = (float) JobCard::where('garage_id', $garageId)
+                    ->whereDate('created_at', '>=', $startDate)
+                    ->whereDate('created_at', '<=', $endDate)
+                    ->whereNotIn('status', ['scheduled']) // exclude draft estimates
+                    ->sum('final_total');
+            }
 
-        // 3. Workshop Operating Expenses
-        $expensesQuery = Expense::where('garage_id', $garageId)
-            ->whereDate('expense_date', '>=', $startDate)
-            ->whereDate('expense_date', '<=', $endDate);
+            // 2. Parts / COGS from Purchase Invoices
+            if (Schema::hasTable('purchase_invoices')) {
+                $partsCost = (float) PurchaseInvoice::where('garage_id', $garageId)
+                    ->whereDate('purchase_date', '>=', $startDate)
+                    ->whereDate('purchase_date', '<=', $endDate)
+                    ->sum('total_amount');
+            }
 
-        $operatingExpenses = (float) (clone $expensesQuery)->sum('amount');
+            // 3. Workshop Operating Expenses
+            if (Schema::hasTable('expenses')) {
+                $expensesQuery = Expense::where('garage_id', $garageId)
+                    ->whereDate('expense_date', '>=', $startDate)
+                    ->whereDate('expense_date', '<=', $endDate);
 
-        // Net Profit & Profit Margin
-        $grossProfit = $revenue - $partsCost;
-        $netProfit = $revenue - $partsCost - $operatingExpenses;
-        $netProfitMargin = $revenue > 0 ? round(($netProfit / $revenue) * 100, 1) : 0;
+                $operatingExpenses = (float) (clone $expensesQuery)->sum('amount');
 
-        // Category breakdown
-        $categoryBreakdown = (clone $expensesQuery)
-            ->selectRaw('category, SUM(amount) as total')
-            ->groupBy('category')
-            ->pluck('total', 'category')
-            ->toArray();
+                // Category breakdown
+                $categoryBreakdown = (clone $expensesQuery)
+                    ->selectRaw('category, SUM(amount) as total')
+                    ->groupBy('category')
+                    ->pluck('total', 'category')
+                    ->toArray();
 
-        // Expense listing with search and category filtering
-        $listQuery = (clone $expensesQuery)->with('creator');
+                // Expense listing with search and category filtering
+                $listQuery = (clone $expensesQuery)->with('creator');
 
-        if ($cat = $request->input('category')) {
-            $listQuery->where('category', $cat);
+                if ($cat = $request->input('category')) {
+                    $listQuery->where('category', $cat);
+                }
+
+                if ($search = $request->input('search')) {
+                    $listQuery->where(function ($q) use ($search) {
+                        $q->where('title', 'like', "%{$search}%")
+                          ->orWhere('notes', 'like', "%{$search}%");
+                    });
+                }
+
+                $expenses = $listQuery->orderBy('expense_date', 'desc')->latest()->paginate(25)->withQueryString();
+            }
+
+            // Net Profit & Profit Margin
+            $grossProfit = $revenue - $partsCost;
+            $netProfit = $revenue - $partsCost - $operatingExpenses;
+            $netProfitMargin = $revenue > 0 ? round(($netProfit / $revenue) * 100, 1) : 0.0;
+        } catch (\Throwable $e) {
+            Log::error('ExpenseController index error: ' . $e->getMessage());
         }
-
-        if ($search = $request->input('search')) {
-            $listQuery->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('notes', 'like', "%{$search}%");
-            });
-        }
-
-        $expenses = $listQuery->orderBy('expense_date', 'desc')->latest()->paginate(25)->withQueryString();
 
         return Inertia::render('Expenses/Index', [
             'expenses' => $expenses,
@@ -153,7 +145,7 @@ class ExpenseController extends Controller
     public function store(Request $request)
     {
         $this->checkOwnerAccess();
-        $this->ensureExpensesTableExists();
+        DatabaseSchemaAutoFixService::ensureSchemaIsUpToDate();
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',

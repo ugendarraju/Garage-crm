@@ -29,54 +29,7 @@ class ServiceReminderController extends Controller
         $hasReminderCol = Schema::hasColumn('job_cards', 'next_service_reminder');
         $hasSentCol = Schema::hasColumn('job_cards', 'service_reminder_sent_at');
 
-        // Base query
-        $query = JobCard::with(['vehicle.brand', 'vehicle.vehicleModel', 'customer.user']);
-
-        if ($garageId) {
-            $query->where('garage_id', $garageId);
-        }
-
-        if ($hasReminderCol) {
-            $query->whereNotNull('next_service_reminder')
-                  ->where('next_service_reminder', '!=', '')
-                  ->where('next_service_reminder', '!=', '0000-00-00');
-        } else {
-            $query->whereRaw('1 = 0');
-        }
-
-        // Search filter
-        if ($search = $request->input('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->whereHas('vehicle', function ($vq) use ($search) {
-                    $vq->where('registration_number', 'like', "%{$search}%");
-                })->orWhereHas('customer.user', function ($uq) use ($search) {
-                    $uq->where('name', 'like', "%{$search}%")
-                       ->orWhere('phone', 'like', "%{$search}%");
-                });
-            });
-        }
-
-        // Status tab filter
-        $filter = $request->input('filter', 'all');
-        if ($hasReminderCol) {
-            if ($filter === 'overdue') {
-                $query->where('next_service_reminder', '<', $today);
-            } elseif ($filter === 'this_week') {
-                $query->whereBetween('next_service_reminder', [$today, $in7Days]);
-            } elseif ($filter === 'this_month') {
-                $query->whereBetween('next_service_reminder', [$in7Days, $in30Days]);
-            } elseif ($filter === 'sent') {
-                if ($hasSentCol) {
-                    $query->whereNotNull('service_reminder_sent_at');
-                } else {
-                    $query->whereRaw('1 = 0');
-                }
-            }
-        }
-
-        $reminders = $query->orderBy('next_service_reminder', 'asc')->get();
-
-        // Calculate KPI Counts across all valid records for this garage
+        $reminders = collect([]);
         $stats = [
             'total' => 0,
             'overdue' => 0,
@@ -85,30 +38,82 @@ class ServiceReminderController extends Controller
             'sent' => 0,
         ];
 
-        if ($hasReminderCol) {
-            $baseStatsQuery = JobCard::query();
+        try {
+            // Base query
+            $query = JobCard::with(['vehicle.brand', 'vehicle.vehicleModel', 'customer.user']);
+
             if ($garageId) {
-                $baseStatsQuery->where('garage_id', $garageId);
+                $query->where('garage_id', $garageId);
             }
-            $baseStatsQuery->whereNotNull('next_service_reminder')
-                           ->where('next_service_reminder', '!=', '')
-                           ->where('next_service_reminder', '!=', '0000-00-00');
 
-            $stats['total'] = (clone $baseStatsQuery)->count();
-            $stats['overdue'] = (clone $baseStatsQuery)->where('next_service_reminder', '<', $today)->count();
-            $stats['this_week'] = (clone $baseStatsQuery)->whereBetween('next_service_reminder', [$today, $in7Days])->count();
-            $stats['this_month'] = (clone $baseStatsQuery)->whereBetween('next_service_reminder', [$in7Days, $in30Days])->count();
-
-            if ($hasSentCol) {
-                $stats['sent'] = (clone $baseStatsQuery)->whereNotNull('service_reminder_sent_at')->count();
+            if ($hasReminderCol) {
+                $query->whereNotNull('next_service_reminder')
+                      ->where('next_service_reminder', '!=', '')
+                      ->where('next_service_reminder', '!=', '0000-00-00');
+            } else {
+                $query->whereRaw('1 = 0');
             }
+
+            // Search filter
+            if ($search = $request->input('search')) {
+                $query->where(function ($q) use ($search) {
+                    $q->whereHas('vehicle', function ($vq) use ($search) {
+                        $vq->where('registration_number', 'like', "%{$search}%");
+                    })->orWhereHas('customer.user', function ($uq) use ($search) {
+                        $uq->where('name', 'like', "%{$search}%")
+                           ->orWhere('phone', 'like', "%{$search}%");
+                    });
+                });
+            }
+
+            // Status tab filter
+            $filter = $request->input('filter', 'all');
+            if ($hasReminderCol) {
+                if ($filter === 'overdue') {
+                    $query->where('next_service_reminder', '<', $today);
+                } elseif ($filter === 'this_week') {
+                    $query->whereBetween('next_service_reminder', [$today, $in7Days]);
+                } elseif ($filter === 'this_month') {
+                    $query->whereBetween('next_service_reminder', [$in7Days, $in30Days]);
+                } elseif ($filter === 'sent') {
+                    if ($hasSentCol) {
+                        $query->whereNotNull('service_reminder_sent_at');
+                    } else {
+                        $query->whereRaw('1 = 0');
+                    }
+                }
+            }
+
+            $reminders = $query->orderBy('next_service_reminder', 'asc')->get();
+
+            // Calculate KPI Counts across all valid records for this garage
+            if ($hasReminderCol) {
+                $baseStatsQuery = JobCard::query();
+                if ($garageId) {
+                    $baseStatsQuery->where('garage_id', $garageId);
+                }
+                $baseStatsQuery->whereNotNull('next_service_reminder')
+                               ->where('next_service_reminder', '!=', '')
+                               ->where('next_service_reminder', '!=', '0000-00-00');
+
+                $stats['total'] = (clone $baseStatsQuery)->count();
+                $stats['overdue'] = (clone $baseStatsQuery)->where('next_service_reminder', '<', $today)->count();
+                $stats['this_week'] = (clone $baseStatsQuery)->whereBetween('next_service_reminder', [$today, $in7Days])->count();
+                $stats['this_month'] = (clone $baseStatsQuery)->whereBetween('next_service_reminder', [$in7Days, $in30Days])->count();
+
+                if ($hasSentCol) {
+                    $stats['sent'] = (clone $baseStatsQuery)->whereNotNull('service_reminder_sent_at')->count();
+                }
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('ServiceReminderController error: ' . $e->getMessage());
         }
 
         return Inertia::render('ServiceReminders/Index', [
             'reminders' => $reminders,
             'stats' => $stats,
-            'currentFilter' => $filter,
-            'search' => $search ?? '',
+            'currentFilter' => $request->input('filter', 'all'),
+            'search' => $request->input('search', ''),
             'garage' => [
                 'name' => $garage?->name,
                 'slug' => $garage?->slug,
@@ -128,9 +133,15 @@ class ServiceReminderController extends Controller
             abort(403, 'Unauthorized.');
         }
 
-        $jobCard->update([
-            'service_reminder_sent_at' => now(),
-        ]);
+        try {
+            if (Schema::hasColumn('job_cards', 'service_reminder_sent_at')) {
+                $jobCard->update([
+                    'service_reminder_sent_at' => now(),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed marking service reminder sent: ' . $e->getMessage());
+        }
 
         return back()->with('success', 'Reminder marked as sent.');
     }

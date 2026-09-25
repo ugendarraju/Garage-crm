@@ -27,6 +27,17 @@ class Expense extends Model
         'expense_date' => 'date',
     ];
 
+    public const CATEGORIES = [
+        'rent' => 'Workshop Rent',
+        'utilities' => 'Electricity, Water & Internet',
+        'food_tea' => 'Staff Tea & Refreshments',
+        'consumables' => 'Shop Consumables (Sprays, Grease, Rags)',
+        'tools' => 'Tools & Machinery Maintenance',
+        'salary_advance' => 'Staff Advance & Wages',
+        'maintenance' => 'Garage Repairs & Infrastructure',
+        'other' => 'Miscellaneous / Other',
+    ];
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -34,15 +45,6 @@ class Expense extends Model
 
     public static function categories(): array
     {
-        return [
-            'rent' => 'Workshop Rent',
-            'utilities' => 'Electricity, Water & Internet',
-            'food_tea' => 'Staff Tea & Refreshments',
-            'consumables' => 'Shop Consumables (Sprays, Grease, Rags)',
-            'tools' => 'Tools & Machinery Maintenance',
-            'salary_advance' => 'Staff Advance & Wages',
-            'maintenance' => 'Garage Repairs & Infrastructure',
-            'other' => 'Miscellaneous / Other',
-        ];
+        return self::CATEGORIES;
     }
 }
