@@ -5,12 +5,20 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 const page = usePage();
 const userRole = computed(() => page.props.auth?.user?.role || 'owner');
+const activeGarageId = computed(() => page.props.auth?.active_garage_id);
+const isSuperAdminMaster = computed(() => userRole.value === 'super_admin' && !activeGarageId.value);
 
 const searchQuery = ref('');
 const selectedCategory = ref(userRole.value === 'customer' ? 'for_customers' : 'all');
 const openItem = ref(null);
 
-const categories = [
+watch(isSuperAdminMaster, (isMaster) => {
+    if (!isMaster && selectedCategory.value === 'admin') {
+        selectedCategory.value = 'all';
+    }
+});
+
+const allCategories = [
     { id: 'all', name: 'All Guides' },
     { id: 'for_customers', name: '📱 For Vehicle Owners (Customers)' },
     { id: 'setup', name: '🚀 Day 1 Setup' },
@@ -24,7 +32,14 @@ const categories = [
     { id: 'admin', name: '👑 Master Admin & Backups' },
 ];
 
-const quickSearchTags = [
+const categories = computed(() => {
+    return allCategories.filter(c => {
+        if (c.id === 'admin' && !isSuperAdminMaster.value) return false;
+        return true;
+    });
+});
+
+const allQuickSearchTags = [
     'System backups',
     'Restore garage',
     'Automated backup',
@@ -46,6 +61,13 @@ const quickSearchTags = [
     'Add mechanic',
     'Upload payment proof',
 ];
+
+const quickSearchTags = computed(() => {
+    if (!isSuperAdminMaster.value) {
+        return allQuickSearchTags.filter(tag => !['System backups', 'Restore garage', 'Automated backup'].includes(tag));
+    }
+    return allQuickSearchTags;
+});
 
 const guides = [
     {
@@ -589,6 +611,11 @@ const filteredGuides = computed(() => {
     const cat = selectedCategory.value;
 
     return guides.filter((item) => {
+        // Exclude master admin guides when under a garage
+        if (item.category === 'admin' && !isSuperAdminMaster.value) {
+            return false;
+        }
+
         // Category filter
         if (cat !== 'all' && item.category !== cat) {
             return false;
