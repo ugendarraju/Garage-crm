@@ -52,4 +52,14 @@ class Garage extends Model
 
         return null;
     }
+
+    public function storagePath(string $subfolder = ''): string
+    {
+        return \App\Services\GarageStorageService::getGarageFolder($this) . ($subfolder ? '/' . trim($subfolder, '/') : '');
+    }
+
+    public static function activeStoragePath(string $subfolder = ''): string
+    {
+        return \App\Services\GarageStorageService::getGarageFolder(null) . ($subfolder ? '/' . trim($subfolder, '/') : '');
+    }
 }

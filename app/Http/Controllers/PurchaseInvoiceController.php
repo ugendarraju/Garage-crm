@@ -80,12 +80,12 @@ class PurchaseInvoiceController extends Controller
 
         $billImagePath = null;
         if ($request->hasFile('bill_image')) {
-            $billImagePath = $request->file('bill_image')->store('invoices', 'public');
+            $billImagePath = \App\Services\GarageStorageService::store($request->file('bill_image'), 'purchases/bills', $garageId);
         }
 
         $paymentReceiptPath = null;
         if ($request->hasFile('payment_receipt')) {
-            $paymentReceiptPath = $request->file('payment_receipt')->store('receipts', 'public');
+            $paymentReceiptPath = \App\Services\GarageStorageService::store($request->file('payment_receipt'), 'purchases/receipts', $garageId);
         }
 
         DB::transaction(function () use ($validated, $billImagePath, $paymentReceiptPath, $garageId) {
@@ -215,12 +215,18 @@ class PurchaseInvoiceController extends Controller
 
         $billImagePath = $purchase->bill_image_path;
         if ($request->hasFile('bill_image')) {
-            $billImagePath = $request->file('bill_image')->store('invoices', 'public');
+            if ($purchase->bill_image_path) {
+                \App\Services\GarageStorageService::delete($purchase->bill_image_path);
+            }
+            $billImagePath = \App\Services\GarageStorageService::store($request->file('bill_image'), 'purchases/bills', $garageId);
         }
 
         $paymentReceiptPath = $purchase->payment_receipt_path;
         if ($request->hasFile('payment_receipt')) {
-            $paymentReceiptPath = $request->file('payment_receipt')->store('receipts', 'public');
+            if ($purchase->payment_receipt_path) {
+                \App\Services\GarageStorageService::delete($purchase->payment_receipt_path);
+            }
+            $paymentReceiptPath = \App\Services\GarageStorageService::store($request->file('payment_receipt'), 'purchases/receipts', $garageId);
         }
 
         DB::transaction(function () use ($purchase, $oldStatus, $newStatus, $oldTotal, $newTotal, $validated, $billImagePath, $paymentReceiptPath, $garageId) {

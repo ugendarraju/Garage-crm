@@ -159,10 +159,7 @@ class GarageSettingsController extends Controller
             // Handle removing logo
             if (!empty($validated['remove_logo'])) {
                 if ($garage->logo_path) {
-                    try {
-                        Storage::disk('public')->delete($garage->logo_path);
-                        @unlink(public_path('storage/' . $garage->logo_path));
-                    } catch (\Throwable $e) {}
+                    \App\Services\GarageStorageService::delete($garage->logo_path);
                 }
                 $garage->logo_path = null;
             }
@@ -170,32 +167,16 @@ class GarageSettingsController extends Controller
             // Handle uploading new logo
             if ($request->hasFile('logo')) {
                 if ($garage->logo_path) {
-                    try {
-                        Storage::disk('public')->delete($garage->logo_path);
-                        @unlink(public_path('storage/' . $garage->logo_path));
-                    } catch (\Throwable $e) {}
+                    \App\Services\GarageStorageService::delete($garage->logo_path);
                 }
-                $path = $request->file('logo')->store('garages/logos', 'public');
+                $path = \App\Services\GarageStorageService::store($request->file('logo'), 'branding', $garage);
                 $garage->logo_path = $path;
-
-                // Also copy directly to public/storage for Hostinger shared hosting symlink resilience
-                try {
-                    $destination = public_path('storage/' . $path);
-                    $destDir = dirname($destination);
-                    if (!is_dir($destDir)) {
-                        @mkdir($destDir, 0755, true);
-                    }
-                    @copy(Storage::disk('public')->path($path), $destination);
-                } catch (\Throwable $e) {}
             }
 
             // Handle removing QR code
             if (!empty($validated['remove_qr_code'])) {
                 if ($garage->qr_code_path) {
-                    try {
-                        Storage::disk('public')->delete($garage->qr_code_path);
-                        @unlink(public_path('storage/' . $garage->qr_code_path));
-                    } catch (\Throwable $e) {}
+                    \App\Services\GarageStorageService::delete($garage->qr_code_path);
                 }
                 $garage->qr_code_path = null;
             }
@@ -203,23 +184,10 @@ class GarageSettingsController extends Controller
             // Handle uploading new QR code
             if ($request->hasFile('qr_code')) {
                 if ($garage->qr_code_path) {
-                    try {
-                        Storage::disk('public')->delete($garage->qr_code_path);
-                        @unlink(public_path('storage/' . $garage->qr_code_path));
-                    } catch (\Throwable $e) {}
+                    \App\Services\GarageStorageService::delete($garage->qr_code_path);
                 }
-                $path = $request->file('qr_code')->store('garages/qrcodes', 'public');
+                $path = \App\Services\GarageStorageService::store($request->file('qr_code'), 'branding', $garage);
                 $garage->qr_code_path = $path;
-
-                // Also copy directly to public/storage for Hostinger shared hosting symlink resilience
-                try {
-                    $destination = public_path('storage/' . $path);
-                    $destDir = dirname($destination);
-                    if (!is_dir($destDir)) {
-                        @mkdir($destDir, 0755, true);
-                    }
-                    @copy(Storage::disk('public')->path($path), $destination);
-                } catch (\Throwable $e) {}
             }
 
             $garage->save();

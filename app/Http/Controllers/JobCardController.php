@@ -546,7 +546,7 @@ class JobCardController extends Controller
             if (!empty($issueData['new_images']) && is_array($issueData['new_images'])) {
                 foreach ($issueData['new_images'] as $image) {
                     if ($image instanceof \Illuminate\Http\UploadedFile) {
-                        $path = $image->store('issues', 'public');
+                        $path = \App\Services\GarageStorageService::store($image, 'job_cards', $jobCard->garage_id);
                         $images[] = '/storage/' . $path;
                     }
                 }
@@ -621,9 +621,9 @@ class JobCardController extends Controller
 
         if ($request->hasFile('payment_screenshot')) {
             if ($jobCard->payment_screenshot_path) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($jobCard->payment_screenshot_path);
+                \App\Services\GarageStorageService::delete($jobCard->payment_screenshot_path);
             }
-            $path = $request->file('payment_screenshot')->store('payments', 'public');
+            $path = \App\Services\GarageStorageService::store($request->file('payment_screenshot'), 'bills', $jobCard->garage_id);
             $jobCard->update(['payment_screenshot_path' => $path]);
         }
 

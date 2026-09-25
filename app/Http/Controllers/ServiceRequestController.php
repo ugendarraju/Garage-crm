@@ -78,7 +78,7 @@ class ServiceRequestController extends Controller
             foreach ($request->issues as $index => $issueData) {
                 $imagePath = null;
                 if ($request->hasFile("issues.{$index}.image")) {
-                    $imagePath = $request->file("issues.{$index}.image")->store('issues', 'public');
+                    $imagePath = \App\Services\GarageStorageService::store($request->file("issues.{$index}.image"), 'service_requests', $validated['garage_id']);
                 }
                 $issuesData[] = [
                     'description' => $issueData['description'],

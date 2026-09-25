@@ -161,7 +161,7 @@ class ExpenseController extends Controller
 
         $receiptPath = null;
         if ($request->hasFile('receipt')) {
-            $receiptPath = $request->file('receipt')->store('expenses', 'public');
+            $receiptPath = \App\Services\GarageStorageService::store($request->file('receipt'), 'expenses', $garageId);
         }
 
         Expense::create([
@@ -209,8 +209,14 @@ class ExpenseController extends Controller
         ];
 
         if ($request->hasFile('receipt')) {
-            $updateData['receipt_path'] = $request->file('receipt')->store('expenses', 'public');
+            if ($expense->receipt_path) {
+                \App\Services\GarageStorageService::delete($expense->receipt_path);
+            }
+            $updateData['receipt_path'] = \App\Services\GarageStorageService::store($request->file('receipt'), 'expenses', $garageId);
         } elseif ($request->boolean('remove_receipt')) {
+            if ($expense->receipt_path) {
+                \App\Services\GarageStorageService::delete($expense->receipt_path);
+            }
             $updateData['receipt_path'] = null;
         }
 
@@ -226,6 +232,10 @@ class ExpenseController extends Controller
 
         if (auth()->user()->role !== 'super_admin' && (int) $expense->garage_id !== (int) $garageId) {
             abort(403, 'Unauthorized.');
+        }
+
+        if ($expense->receipt_path) {
+            \App\Services\GarageStorageService::delete($expense->receipt_path);
         }
 
         $expense->delete();
