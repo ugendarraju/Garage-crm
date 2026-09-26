@@ -160,7 +160,8 @@ const submit = () => {
 
     form.transform((data) => ({
         ...data,
-        services: services.value
+        customer_issues: (data.customer_issues || []).filter(i => i.description && i.description.trim() !== ''),
+        services: services.value.filter(s => s.name && s.name.trim() !== '')
     })).post(route('job-cards.store'));
 };
 

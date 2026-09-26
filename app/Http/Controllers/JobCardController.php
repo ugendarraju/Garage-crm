@@ -76,6 +76,19 @@ class JobCardController extends Controller
         $garageId = \App\Models\Garage::getActiveGarageId();
         $garage = \App\Models\Garage::find($garageId);
 
+        if ($request->has('customer_issues') && is_array($request->customer_issues)) {
+            $cleanedIssues = array_values(array_filter($request->customer_issues, function ($issue) {
+                return is_array($issue) && !empty($issue['description']) && trim($issue['description']) !== '';
+            }));
+            $request->merge(['customer_issues' => $cleanedIssues]);
+        }
+        if ($request->has('services') && is_array($request->services)) {
+            $cleanedServices = array_values(array_filter($request->services, function ($service) {
+                return is_array($service) && !empty($service['name']) && trim($service['name']) !== '';
+            }));
+            $request->merge(['services' => $cleanedServices]);
+        }
+
         $validated = $request->validate([
             // Customer & Vehicle
             'customer_id' => 'nullable|exists:customers,id',
