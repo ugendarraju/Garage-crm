@@ -203,7 +203,10 @@ const formatCurrency = (amount) => {
                     <!-- Editable Purchased Items -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                         <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-lg font-bold text-gray-900">Purchased Items</h2>
+                            <div>
+                                <h2 class="text-lg font-bold text-gray-900">Purchased Items</h2>
+                                <p class="text-xs text-gray-500 font-normal mt-0.5">Select an existing inventory part to restock, or choose "+ New Part" and type its name to auto-register it into inventory.</p>
+                            </div>
                             <button type="button" @click="addItemRow" class="text-sm font-bold text-blue-600 hover:text-blue-800">+ Add Row</button>
                         </div>
                         
@@ -224,12 +227,12 @@ const formatCurrency = (amount) => {
                                     <tr v-for="(item, index) in form.items" :key="index">
                                         <td class="py-2 pr-2 align-top">
                                             <select v-model="item.inventory_id" @change="handleItemSelect(index)" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm">
-                                                <option value="">-- Custom Part --</option>
-                                                <option v-for="inv in inventoryItems" :key="inv.id" :value="inv.id">{{ inv.part_name }}</option>
+                                                <option value="">+ New Part (Type Name)</option>
+                                                <option v-for="inv in inventoryItems" :key="inv.id" :value="inv.id">{{ inv.part_name }} (In Stock: {{ inv.current_stock || 0 }})</option>
                                             </select>
                                         </td>
                                         <td class="py-2 pr-2 align-top">
-                                            <input v-model="item.part_name" :disabled="!!item.inventory_id" :required="!item.inventory_id" type="text" placeholder="Enter name..." class="block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm disabled:bg-gray-100">
+                                            <input v-model="item.part_name" :disabled="!!item.inventory_id" :required="!item.inventory_id" type="text" :placeholder="item.inventory_id ? 'Selected from Inventory' : 'Type new part name...'" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm disabled:bg-gray-100 disabled:text-gray-600">
                                         </td>
                                         <td class="py-2 pr-2 align-top">
                                             <input v-model="item.quantity" @input="calculateTotals" type="number" step="0.01" required min="0.01" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm">
