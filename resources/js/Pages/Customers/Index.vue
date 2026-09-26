@@ -14,6 +14,8 @@ const isModalOpen = ref(false);
 const editingCustomer = ref(null);
 const isViewJobsModalOpen = ref(false);
 const viewingCustomer = ref(null);
+const isViewVehiclesModalOpen = ref(false);
+const viewingVehiclesCustomer = ref(null);
 
 const form = useForm({
     name: '',
@@ -55,6 +57,16 @@ const openViewJobsModal = (customer) => {
 const closeViewJobsModal = () => {
     isViewJobsModalOpen.value = false;
     viewingCustomer.value = null;
+};
+
+const openViewVehiclesModal = (customer) => {
+    viewingVehiclesCustomer.value = customer;
+    isViewVehiclesModalOpen.value = true;
+};
+
+const closeViewVehiclesModal = () => {
+    isViewVehiclesModalOpen.value = false;
+    viewingVehiclesCustomer.value = null;
 };
 
 const closeModal = () => {
@@ -185,6 +197,7 @@ const formatDate = (dateString) => {
                                     <tr>
                                         <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Name</th>
                                         <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Contact</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Vehicles</th>
                                         <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Total Jobs</th>
                                         <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Added On</th>
                                         <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
@@ -210,6 +223,36 @@ const formatDate = (dateString) => {
                                             <div class="text-gray-500">{{ customer.user.email?.includes('customer_') ? 'No email' : customer.user.email }}</div>
                                         </td>
                                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                            <div v-if="customer.vehicles && customer.vehicles.length > 1">
+                                                <button
+                                                    @click="openViewVehiclesModal(customer)"
+                                                    type="button"
+                                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-purple-50 text-purple-700 ring-1 ring-inset ring-purple-600/20 hover:bg-purple-100 transition shadow-xs cursor-pointer"
+                                                    title="Click to view all vehicles"
+                                                >
+                                                    🚗 {{ customer.vehicles.length }} Vehicles ▾
+                                                </button>
+                                            </div>
+                                            <div v-else-if="customer.vehicles && customer.vehicles.length === 1">
+                                                <button
+                                                    @click="openViewVehiclesModal(customer)"
+                                                    type="button"
+                                                    class="text-left group flex flex-col hover:opacity-80 transition cursor-pointer"
+                                                    title="Click to view vehicle details"
+                                                >
+                                                    <span class="inline-flex items-center gap-1 font-mono text-xs font-bold text-gray-900 bg-gray-100 group-hover:bg-purple-50 group-hover:text-purple-700 px-1.5 py-0.5 rounded border border-gray-200">
+                                                        🚗 {{ customer.vehicles[0].registration_number }}
+                                                    </span>
+                                                    <span class="text-[11px] text-gray-500 mt-0.5">
+                                                        {{ customer.vehicles[0].vehicle_model?.name || customer.vehicles[0].brand?.name || 'Vehicle' }}
+                                                    </span>
+                                                </button>
+                                            </div>
+                                            <div v-else class="text-xs text-gray-400 italic">
+                                                No vehicles
+                                            </div>
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                             <button @click="openViewJobsModal(customer)" class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 hover:bg-blue-100 cursor-pointer">
                                                 {{ customer.job_cards_count }} Jobs
                                             </button>
@@ -224,7 +267,7 @@ const formatDate = (dateString) => {
                                         </td>
                                     </tr>
                                     <tr v-if="customers.length === 0">
-                                        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                                        <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
                                             No customers found. Click "Add Customer" to create one.
                                         </td>
                                     </tr>
@@ -412,6 +455,87 @@ const formatDate = (dateString) => {
                 </div>
                 <div v-else class="text-center py-8 text-gray-500">
                     No job history found for this customer.
+                </div>
+            </div>
+        </Modal>
+
+        <!-- View Customer Vehicles Modal -->
+        <Modal :show="isViewVehiclesModalOpen" @close="closeViewVehiclesModal" maxWidth="3xl">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold">
+                            🚗
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900 leading-tight">
+                                Registered Vehicles
+                            </h2>
+                            <p class="text-xs text-gray-500">
+                                Customer: <strong class="text-gray-700">{{ viewingVehiclesCustomer?.user?.name }}</strong> ({{ viewingVehiclesCustomer?.user?.phone }})
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button
+                            @click="closeViewVehiclesModal(); openModal(viewingVehiclesCustomer);"
+                            type="button"
+                            class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-lg hover:bg-blue-100 border border-blue-200 transition"
+                        >
+                            + Add / Edit Vehicles
+                        </button>
+                        <button @click="closeViewVehiclesModal" type="button" class="text-gray-400 hover:text-gray-500 p-1">
+                            <span class="sr-only">Close</span>
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div v-if="viewingVehiclesCustomer?.vehicles && viewingVehiclesCustomer.vehicles.length > 0" class="overflow-hidden border border-gray-200 rounded-xl">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="py-3 pl-4 pr-3 text-left text-xs font-semibold text-gray-700">Reg Number</th>
+                                <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-700">Brand & Model</th>
+                                <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-700">Type / Fuel</th>
+                                <th scope="col" class="px-3 py-3 text-right text-xs font-semibold text-gray-700">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 bg-white">
+                            <tr v-for="v in viewingVehiclesCustomer.vehicles" :key="v.id" class="hover:bg-gray-50">
+                                <td class="whitespace-nowrap py-3.5 pl-4 pr-3 text-sm font-mono font-bold text-gray-900">
+                                    <span class="bg-gray-100 px-2 py-1 rounded border border-gray-200">
+                                        {{ v.registration_number }}
+                                    </span>
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3.5 text-sm text-gray-700 font-medium">
+                                    {{ v.brand?.name || '—' }} {{ v.vehicle_model?.name || '' }}
+                                    <span v-if="v.year" class="text-xs text-gray-400 ml-1">({{ v.year }})</span>
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3.5 text-xs text-gray-500">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 mr-1.5">
+                                        {{ v.vehicle_type || 'Vehicle' }}
+                                    </span>
+                                    <span v-if="v.fuel_type" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700">
+                                        {{ v.fuel_type }}
+                                    </span>
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3.5 text-right text-xs">
+                                    <Link
+                                        :href="route('job-cards.create', { customer_id: viewingVehiclesCustomer.id, vehicle_id: v.id })"
+                                        class="inline-flex items-center px-2.5 py-1 bg-primary-50 text-primary-700 hover:bg-primary-100 font-semibold rounded-lg border border-primary-200 transition"
+                                    >
+                                        + New Job Card
+                                    </Link>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div v-else class="text-center py-8 text-gray-500 text-sm">
+                    No vehicles registered for this customer.
                 </div>
             </div>
         </Modal>

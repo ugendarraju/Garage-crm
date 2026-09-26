@@ -24,7 +24,7 @@ class CustomerController extends Controller
         $garageId = \App\Models\Garage::getActiveGarageId();
         
         $customers = Customer::where('garage_id', $garageId)
-            ->with(['user', 'vehicles', 'jobCards.vehicle.brand', 'jobCards.vehicle.vehicleModel'])
+            ->with(['user', 'vehicles.brand', 'vehicles.vehicleModel', 'jobCards.vehicle.brand', 'jobCards.vehicle.vehicleModel'])
             ->withCount('jobCards')
             ->latest()
             ->get();

@@ -14,16 +14,20 @@ const props = defineProps({
     inventoryItems: Array,
 });
 
+const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+const preselectedCustomerId = urlParams?.get('customer_id') ? Number(urlParams.get('customer_id')) : '';
+const preselectedVehicleId = urlParams?.get('vehicle_id') ? Number(urlParams.get('vehicle_id')) : '';
+
 const form = useForm({
     // Existing Customer logic
-    customer_id: '',
+    customer_id: preselectedCustomerId,
     
     // New Customer inline logic
     new_customer_name: '',
     new_customer_phone: '',
     
     // Existing Vehicle Logic
-    vehicle_id: '',
+    vehicle_id: preselectedVehicleId,
     
     // New Vehicle Inline logic
     new_vehicle_reg: '',
