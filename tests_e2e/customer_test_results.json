@@ -1,0 +1,32 @@
+[
+  {
+    "step": "Customer Authentication",
+    "status": "pass",
+    "details": "Successfully authenticated to Customer Portal"
+  },
+  {
+    "step": "Customer Dashboard",
+    "status": "pass",
+    "details": "Customer portal metrics, sidebar, and welcome banner display correctly"
+  },
+  {
+    "step": "Customer Vehicles Section",
+    "status": "pass",
+    "details": "Registered vehicles list & Add New button rendered"
+  },
+  {
+    "step": "Public Booking Page",
+    "status": "pass",
+    "details": "Customer can access public service booking page"
+  },
+  {
+    "step": "Service Booking Fields",
+    "status": "pass",
+    "details": "Booking page structure verified"
+  },
+  {
+    "step": "Customer Service Records",
+    "status": "pass",
+    "details": "Customer job cards & history section verified"
+  }
+]

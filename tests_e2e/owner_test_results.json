@@ -1,0 +1,117 @@
+[
+  {
+    "step": "Owner Authentication",
+    "status": "pass",
+    "details": "Successfully logged in to Dashboard"
+  },
+  {
+    "step": "Dashboard Overview",
+    "status": "pass",
+    "details": "Dashboard renders workshop name and operational metrics"
+  },
+  {
+    "step": "Customers Management",
+    "status": "pass",
+    "details": "Customer list displayed properly preserving demo dummy data"
+  },
+  {
+    "step": "Vehicles & History",
+    "status": "pass",
+    "details": "Loaded vehicles page"
+  },
+  {
+    "step": "Vehicle Brands",
+    "status": "pass",
+    "details": "Vehicle database accessible"
+  },
+  {
+    "step": "Inventory Management",
+    "status": "pass",
+    "details": "Inventory page loaded"
+  },
+  {
+    "step": "Inventory CSV Export",
+    "status": "pass",
+    "details": "Export endpoint returned status 200"
+  },
+  {
+    "step": "Part Categories",
+    "status": "pass",
+    "details": "Part categories page accessible"
+  },
+  {
+    "step": "Part Brands",
+    "status": "pass",
+    "details": "Part brands page accessible"
+  },
+  {
+    "step": "Suppliers Management",
+    "status": "pass",
+    "details": "Suppliers page loaded"
+  },
+  {
+    "step": "Purchases & Invoices",
+    "status": "pass",
+    "details": "Purchases page loaded"
+  },
+  {
+    "step": "Job Cards Overview",
+    "status": "pass",
+    "details": "Job cards management view loaded"
+  },
+  {
+    "step": "Job Card Creation Form",
+    "status": "pass",
+    "details": "Job card builder wizard accessible"
+  },
+  {
+    "step": "Service Requests Admin",
+    "status": "pass",
+    "details": "Service requests review queue accessible"
+  },
+  {
+    "step": "Service Reminders",
+    "status": "pass",
+    "details": "Service reminders tracker loaded"
+  },
+  {
+    "step": "Counter Sales",
+    "status": "pass",
+    "details": "Counter sales module accessible"
+  },
+  {
+    "step": "Expenses & Net Profit",
+    "status": "pass",
+    "details": "Expense and net profit tracker loaded"
+  },
+  {
+    "step": "Coupons Management",
+    "status": "pass",
+    "details": "Discount coupons manager loaded"
+  },
+  {
+    "step": "Staff & Team Management",
+    "status": "pass",
+    "details": "Staff roster loaded"
+  },
+  {
+    "step": "Service Types & Packages",
+    "status": "pass",
+    "details": "Service types master list loaded"
+  },
+  {
+    "step": "Settings & Master Data",
+    "status": "pass",
+    "details": "Workshop profile & settings accessible"
+  },
+  {
+    "step": "Interactive User Guide",
+    "status": "pass",
+    "details": "Documentation and user guide loaded"
+  },
+  {
+    "step": "Action Logs & Audit Trail",
+    "status": "pass",
+    "details": "Audit trail loaded with live records"
+  }
+]

@@ -1,0 +1,67 @@
+[
+  {
+    "step": "Mobile Overflow Check: Login Page",
+    "status": "pass",
+    "details": "No unwanted horizontal scrolling"
+  },
+  {
+    "step": "Mobile Login Layout",
+    "status": "pass",
+    "details": "Log in button and inputs properly visible on mobile viewport"
+  },
+  {
+    "step": "Mobile Dashboard Access",
+    "status": "pass",
+    "details": "Loaded dashboard on mobile"
+  },
+  {
+    "step": "Mobile Overflow Check: Dashboard",
+    "status": "pass",
+    "details": "No unwanted horizontal scrolling"
+  },
+  {
+    "step": "Mobile Navigation Toggle",
+    "status": "pass",
+    "details": "Mobile menu toggle button is present and accessible"
+  },
+  {
+    "step": "Mobile Drawer Opening",
+    "status": "pass",
+    "details": "Mobile navigation drawer slides in with operational links"
+  },
+  {
+    "step": "Mobile Overflow Check: Customers Page",
+    "status": "pass",
+    "details": "No unwanted horizontal scrolling"
+  },
+  {
+    "step": "Mobile Customers List",
+    "status": "pass",
+    "details": "Customers table/cards scrollable or stacked on mobile"
+  },
+  {
+    "step": "Mobile Overflow Check: Job Cards Page",
+    "status": "pass",
+    "details": "No unwanted horizontal scrolling"
+  },
+  {
+    "step": "Mobile Overflow Check: Inventory Page",
+    "status": "pass",
+    "details": "No unwanted horizontal scrolling"
+  },
+  {
+    "step": "Mobile Overflow Check: Settings Page",
+    "status": "pass",
+    "details": "No unwanted horizontal scrolling"
+  },
+  {
+    "step": "Mobile Customer Portal",
+    "status": "pass",
+    "details": "Customer portal cleanly styled for mobile screens"
+  },
+  {
+    "step": "Mobile Public Booking Page",
+    "status": "pass",
+    "details": "Online booking form adapts seamlessly to mobile screen widths"
+  }
+]
