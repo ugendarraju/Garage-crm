@@ -10,11 +10,23 @@ const page = usePage();
 const user = computed(() => page.props.auth.user);
 const activeGarageId = computed(() => page.props.auth.active_garage_id);
 
-const crmName = computed(() => page.props.system_settings?.name || 'GarageSaarthi');
+const crmName = computed(() => page.props.system_settings?.name || 'PistonCRM');
 const crmSubheading = computed(() => page.props.system_settings?.subheading || 'Smart Workspace');
 const crmLogoUrl = computed(() => page.props.system_settings?.logo_url || null);
 const crmLogoSize = computed(() => page.props.system_settings?.logo_size || 36);
 const crmFaviconUrl = computed(() => page.props.system_settings?.favicon_url || null);
+
+watch(crmName, (newName) => {
+    if (typeof document !== 'undefined' && newName) {
+        let meta = document.querySelector('meta[name="crm-name"]');
+        if (!meta) {
+            meta = document.createElement('meta');
+            meta.name = 'crm-name';
+            document.head.appendChild(meta);
+        }
+        meta.content = newName;
+    }
+}, { immediate: true });
 
 const updateFavicon = (url) => {
     if (typeof document === 'undefined') return;
@@ -46,6 +58,7 @@ const navigation = computed(() => {
     if (user.value.role === 'super_admin' && !activeGarageId.value) {
         return [
             { name: 'Garages', href: route('garages.index'), current: route().current('garages.*'), icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
+            { name: 'Action Logs', href: route('action-logs.index'), current: route().current('action-logs.*'), icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
             { name: 'System Backups', href: route('admin.backups.index'), current: route().current('admin.backups.*'), icon: 'M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4' },
             { name: 'Settings', href: route('admin.settings.index'), current: route().current('admin.settings.*'), icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
             { name: 'User Guide', href: route('user-guide'), current: route().current('user-guide'), icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' }
@@ -72,7 +85,8 @@ const navigation = computed(() => {
         { name: 'Purchases', href: route('purchases.index'), current: route().current('purchases.*'), icon: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z' },
         { name: 'Sales', href: route('sales.index'), current: route().current('sales.*'), icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
         ...(isOwner ? [
-            { name: 'Expenses & Profit', href: route('expenses.index'), current: route().current('expenses.*'), icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' }
+            { name: 'Expenses & Profit', href: route('expenses.index'), current: route().current('expenses.*'), icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' },
+            { name: 'Action Logs', href: route('action-logs.index'), current: route().current('action-logs.*'), icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' }
         ] : []),
         { name: 'Coupons', href: route('coupons.index'), current: route().current('coupons.*'), icon: 'M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z' },
         { name: 'Vehicle Database', href: route('vehicle-brands.index'), current: route().current('vehicle-brands.*') || route().current('models.*'), icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z' },

@@ -303,5 +303,25 @@ You can share these instructions with your workshop customers:
 
 ---
 
+## 17. Action Logs & Audit Trail (Workshop Security & Accountability)
+
+Every critical operational and financial event is automatically logged for transparency:
+
+- **What is logged**:
+  - **Job Cards**: Creation, status updates (`listed` ➔ `working` ➔ `completed` ➔ `delivered`), bill item additions, and payment status updates.
+  - **Inventory**: New parts added, price/stock edits, deletions, and bulk CSV imports.
+  - **Expenses**: Added operating expenses, receipts, and deletions.
+  - **Staff Management**: Team member additions, permission toggles, and removals.
+  - **Settings & Branding**: Workshop details, GST number, bank details, and UPI QR updates.
+  - **Security & Logins**: User authentication sessions and operator IP addresses.
+
+### How to use Action Logs:
+1. Click **Action Logs** in the left sidebar menu (or click **Action Logs** next to any garage in the Master Dashboard).
+2. Filter events by **Module** (Job Cards, Inventory, Staff, Expenses, etc.), **Action Type** (Created, Updated, Deleted, Status, Payment), or **Operator**.
+3. Click **Inspect / View Payload** on any action entry to view exact metadata and modified attributes.
+4. Click **Export CSV Audit Log** anytime for accountant reviews or internal audits.
+
+---
+
 *This documentation is maintained in your CRM repository under `docs/GARAGE_OWNER_MANUAL.md`. Any new features added to the platform will be automatically documented here.*
 

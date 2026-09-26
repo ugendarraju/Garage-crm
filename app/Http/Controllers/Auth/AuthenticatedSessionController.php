@@ -33,6 +33,18 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $user = auth()->user();
+        if ($user) {
+            \App\Services\ActionLogService::log(
+                action: 'login',
+                module: 'auth',
+                description: "User '{$user->name}' logged in ({$user->role})",
+                garageId: $user->garage_id,
+                userId: $user->id,
+                details: ['email' => $user->email, 'role' => $user->role]
+            );
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

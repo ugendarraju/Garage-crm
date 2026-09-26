@@ -58,6 +58,15 @@ class BackupController extends Controller
 
         try {
             $result = BackupService::createBackup($garageId, $label);
+
+            \App\Services\ActionLogService::log(
+                action: 'created',
+                module: 'system',
+                description: "Generated backup archive '{$result['filename']}'" . ($garageId ? " for garage #{$garageId}" : " (Full System)"),
+                garageId: $garageId,
+                details: ['filename' => $result['filename'], 'label' => $label]
+            );
+
             return back()->with('success', "Backup archive '{$result['filename']}' generated successfully.");
         } catch (\Throwable $e) {
             return back()->withErrors(['error' => 'Backup failed: ' . $e->getMessage()]);
@@ -97,9 +106,26 @@ class BackupController extends Controller
             if ($validated['restore_type'] === 'single_garage') {
                 $targetId = (int) $validated['target_garage_id'];
                 $result = BackupService::restoreGarage($path, $targetId);
+
+                \App\Services\ActionLogService::log(
+                    action: 'restored',
+                    module: 'system',
+                    description: "Restored garage #{$targetId} from backup archive '{$validated['filename']}'",
+                    garageId: $targetId,
+                    details: ['filename' => $validated['filename'], 'restore_type' => 'single_garage']
+                );
+
                 return back()->with('success', $result['message']);
             } else {
                 $result = BackupService::restoreFull($path);
+
+                \App\Services\ActionLogService::log(
+                    action: 'restored',
+                    module: 'system',
+                    description: "Performed full system restore from backup archive '{$validated['filename']}'",
+                    details: ['filename' => $validated['filename'], 'restore_type' => 'full']
+                );
+
                 return back()->with('success', $result['message']);
             }
         } catch (\Throwable $e) {

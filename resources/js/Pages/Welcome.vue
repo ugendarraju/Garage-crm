@@ -27,7 +27,7 @@ defineProps({
             </div>
 
             <h1 class="mb-4 text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-                Welcome to <span class="text-orange-500">Garage CRM</span>
+                Welcome to <span class="text-orange-500">{{ $page.props.crm_name || 'PistonCRM' }}</span>
             </h1>
             
             <p class="mx-auto mb-10 max-w-2xl text-lg text-gray-500 dark:text-gray-400">
@@ -62,7 +62,7 @@ defineProps({
         </div>
         
         <footer class="absolute bottom-6 text-sm text-gray-400">
-            Powered by Garage Saarthi Architecture
+            Powered by {{ $page.props.crm_name || 'PistonCRM' }} Architecture
         </footer>
     </div>
 </template>

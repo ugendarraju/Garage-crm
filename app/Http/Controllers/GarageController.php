@@ -38,6 +38,12 @@ class GarageController extends Controller
         $garage->save();
         
         $status = $garage->is_active ? 'enabled' : 'disabled';
+        \App\Services\ActionLogService::log(
+            action: $garage->is_active ? 'enabled' : 'disabled',
+            module: 'garages',
+            description: "Garage '{$garage->name}' was {$status}",
+            garageId: $garage->id
+        );
         return redirect()->back()->with('success', "Garage {$status} successfully.");
     }
 
@@ -65,6 +71,14 @@ class GarageController extends Controller
             'garage_id' => $garage->id,
         ]);
 
+        \App\Services\ActionLogService::log(
+            action: 'created',
+            module: 'garages',
+            description: "Created new garage '{$garage->name}' with initial owner '{$request->owner_name}' ({$request->email})",
+            garageId: $garage->id,
+            details: ['garage_name' => $garage->name, 'owner_email' => $request->email]
+        );
+
         return redirect()->back()->with('success', 'Garage and Owner created successfully.');
     }
 
@@ -73,6 +87,14 @@ class GarageController extends Controller
         $this->authorizeSuperAdmin();
 
         $garage = Garage::findOrFail($id);
+        $garageName = $garage->name;
+        \App\Services\ActionLogService::log(
+            action: 'deleted',
+            module: 'garages',
+            description: "Deleted garage '{$garageName}' and all associated workshop data",
+            garageId: $garage->id
+        );
+
         $garage->delete();
         return redirect()->back()->with('success', 'Garage deleted successfully.');
     }

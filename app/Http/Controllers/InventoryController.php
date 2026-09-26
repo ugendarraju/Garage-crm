@@ -64,7 +64,15 @@ class InventoryController extends Controller
 
         $validated['garage_id'] = $garageId;
 
-        Inventory::create($validated);
+        $item = Inventory::create($validated);
+
+        \App\Services\ActionLogService::log(
+            action: 'created',
+            module: 'inventory',
+            description: "Added inventory item '{$item->part_name}' (Stock: {$item->current_stock}, Price: ₹{$item->current_price})",
+            garageId: $garageId,
+            details: ['inventory_id' => $item->id, 'part_code' => $item->part_code, 'stock' => $item->current_stock, 'price' => $item->current_price]
+        );
 
         return redirect()->route('inventory.index')->with('success', 'Item added to inventory.');
     }
@@ -118,6 +126,14 @@ class InventoryController extends Controller
 
         $inventory->update($validated);
 
+        \App\Services\ActionLogService::log(
+            action: 'updated',
+            module: 'inventory',
+            description: "Updated inventory item '{$inventory->part_name}' (Stock: {$inventory->current_stock}, Price: ₹{$inventory->current_price})",
+            garageId: $garageId,
+            details: ['inventory_id' => $inventory->id, 'part_code' => $inventory->part_code, 'stock' => $inventory->current_stock]
+        );
+
         return redirect()->route('inventory.index')->with('success', 'Inventory item updated.');
     }
 
@@ -128,6 +144,15 @@ class InventoryController extends Controller
         if (auth()->user()->role !== 'super_admin' && (int) $inventory->garage_id !== (int) $garageId) {
             abort(403, 'Unauthorized access.');
         }
+
+        $partName = $inventory->part_name;
+        \App\Services\ActionLogService::log(
+            action: 'deleted',
+            module: 'inventory',
+            description: "Deleted inventory item '{$partName}'",
+            garageId: $garageId,
+            details: ['inventory_id' => $inventory->id, 'part_name' => $partName]
+        );
 
         $inventory->delete();
         return redirect()->back()->with('success', 'Item deleted successfully.');
@@ -210,6 +235,14 @@ class InventoryController extends Controller
             }
         }
         fclose($fileStream);
+
+        \App\Services\ActionLogService::log(
+            action: 'created',
+            module: 'inventory',
+            description: "Bulk imported {$importedCount} inventory items from CSV spreadsheet",
+            garageId: $garageId,
+            details: ['imported_count' => $importedCount]
+        );
 
         return redirect()->back()->with('success', "$importedCount items imported successfully.");
     }

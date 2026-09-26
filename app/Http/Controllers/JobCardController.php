@@ -239,6 +239,14 @@ class JobCardController extends Controller
             'final_total' => max(0, $finalTotal - ($jobCard->discount ?? 0)),
         ]);
 
+        \App\Services\ActionLogService::log(
+            action: 'created',
+            module: 'job_cards',
+            description: "Created Job Card #{$jobCard->job_number} (Status: {$jobCard->status}, Total: ₹{$jobCard->final_total})",
+            garageId: $jobCard->garage_id,
+            details: ['job_card_id' => $jobCard->id, 'job_number' => $jobCard->job_number, 'status' => $jobCard->status, 'final_total' => $jobCard->final_total]
+        );
+
         return redirect()->route('job-cards.index')->with('success', 'Job Card created successfully.');
     }
 
@@ -474,6 +482,14 @@ class JobCardController extends Controller
             'final_total' => max(0, $finalTotal - ($jobCard->discount ?? 0)),
         ]);
 
+        \App\Services\ActionLogService::log(
+            action: 'updated',
+            module: 'job_cards',
+            description: "Updated Job Card #{$jobCard->job_number} (Total: ₹{$jobCard->final_total}, Status: {$jobCard->status})",
+            garageId: $jobCard->garage_id,
+            details: ['job_card_id' => $jobCard->id, 'job_number' => $jobCard->job_number, 'final_total' => $jobCard->final_total]
+        );
+
         return redirect()->route('job-cards.index')->with([
             'success' => 'Job Card updated.'
         ]);
@@ -488,6 +504,18 @@ class JobCardController extends Controller
         if (auth()->user()->role !== 'super_admin' && (int) $jobCard->garage_id !== (int) \App\Models\Garage::getActiveGarageId()) {
             abort(403, 'Unauthorized access.');
         }
+
+        $jobNumber = $jobCard->job_number;
+        $garageId = $jobCard->garage_id;
+
+        \App\Services\ActionLogService::log(
+            action: 'deleted',
+            module: 'job_cards',
+            description: "Deleted Job Card #{$jobNumber}",
+            garageId: $garageId,
+            details: ['job_card_id' => $jobCard->id, 'job_number' => $jobNumber]
+        );
+
         $jobCard->delete();
         return redirect()->route('job-cards.index')->with('success', 'Job Card deleted.');
     }
@@ -506,11 +534,20 @@ class JobCardController extends Controller
             'status' => 'required|in:scheduled,listed,working,complete,completed,delivered'
         ]);
 
+        $oldStatus = $jobCard->status;
         $jobCard->status = $validated['status'];
         if ($validated['status'] === 'delivered' && !$jobCard->delivered_at) {
             $jobCard->delivered_at = now();
         }
         $jobCard->save();
+
+        \App\Services\ActionLogService::log(
+            action: 'status_changed',
+            module: 'job_cards',
+            description: "Changed Job Card #{$jobCard->job_number} status from '{$oldStatus}' to '{$validated['status']}'",
+            garageId: $jobCard->garage_id,
+            details: ['job_card_id' => $jobCard->id, 'job_number' => $jobCard->job_number, 'old_status' => $oldStatus, 'new_status' => $validated['status']]
+        );
 
         return redirect()->back()->with([
             'success' => 'Status updated successfully.'
@@ -643,6 +680,14 @@ class JobCardController extends Controller
         ]);
 
         $jobCard->update(['payment_status' => $validated['payment_status']]);
+
+        \App\Services\ActionLogService::log(
+            action: 'payment_received',
+            module: 'job_cards',
+            description: "Updated payment status on Job Card #{$jobCard->job_number} to '{$validated['payment_status']}'",
+            garageId: $jobCard->garage_id,
+            details: ['job_card_id' => $jobCard->id, 'job_number' => $jobCard->job_number, 'payment_status' => $validated['payment_status']]
+        );
 
         return redirect()->back()->with('success', 'Payment status updated successfully.');
     }

@@ -7,7 +7,7 @@ const props = defineProps({
     settings: {
         type: Object,
         default: () => ({
-            crm_name: 'GarageSaarthi',
+            crm_name: 'PistonCRM',
             crm_subheading: 'Smart Workspace',
             crm_logo_path: null,
             crm_logo_size: 36,
@@ -20,7 +20,7 @@ const props = defineProps({
 
 const form = useForm({
     _method: 'POST',
-    crm_name: props.settings.crm_name || 'GarageSaarthi',
+    crm_name: props.settings.crm_name || 'PistonCRM',
     crm_subheading: props.settings.crm_subheading || '',
     crm_logo_size: props.settings.crm_logo_size || 36,
     logo: null,
@@ -85,7 +85,7 @@ const removeFavicon = () => {
 
 const crmInitials = computed(() => {
     const name = form.crm_name.trim();
-    if (!name) return 'GS';
+    if (!name) return 'PC';
     const parts = name.split(/\s+/);
     if (parts.length >= 2) {
         return (parts[0][0] + parts[1][0]).toUpperCase();
@@ -150,10 +150,10 @@ const submit = () => {
                                     type="text"
                                     v-model="form.crm_name"
                                     required
-                                    placeholder="e.g. GarageSaarthi or Piston CRM"
+                                    placeholder="e.g. PistonCRM"
                                     class="w-full rounded-xl border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm py-2.5 px-3 font-medium"
                                 />
-                                <p class="text-xs text-gray-500 mt-1.5">Replaces "GarageSaarthi" across the entire platform.</p>
+                                <p class="text-xs text-gray-500 mt-1.5">Displayed in the navigation sidebar and browser tab title across the platform.</p>
                                 <p v-if="form.errors.crm_name" class="text-xs text-red-600 mt-1">{{ form.errors.crm_name }}</p>
                             </div>
 

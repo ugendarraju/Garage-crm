@@ -176,6 +176,14 @@ class ExpenseController extends Controller
             'created_by' => auth()->id(),
         ]);
 
+        \App\Services\ActionLogService::log(
+            action: 'created',
+            module: 'expenses',
+            description: "Recorded expense '{$expense->title}' (₹{$expense->amount}, Category: {$expense->category})",
+            garageId: $garageId,
+            details: ['expense_id' => $expense->id, 'title' => $expense->title, 'amount' => $expense->amount, 'category' => $expense->category]
+        );
+
         return back()->with('success', 'Expense recorded successfully.');
     }
 
@@ -222,6 +230,14 @@ class ExpenseController extends Controller
 
         $expense->update($updateData);
 
+        \App\Services\ActionLogService::log(
+            action: 'updated',
+            module: 'expenses',
+            description: "Updated expense '{$expense->title}' (₹{$expense->amount}, Category: {$expense->category})",
+            garageId: $garageId,
+            details: ['expense_id' => $expense->id, 'title' => $expense->title, 'amount' => $expense->amount]
+        );
+
         return back()->with('success', 'Expense updated successfully.');
     }
 
@@ -237,6 +253,17 @@ class ExpenseController extends Controller
         if ($expense->receipt_path) {
             \App\Services\GarageStorageService::delete($expense->receipt_path);
         }
+
+        $title = $expense->title;
+        $amount = $expense->amount;
+
+        \App\Services\ActionLogService::log(
+            action: 'deleted',
+            module: 'expenses',
+            description: "Deleted expense '{$title}' (₹{$amount})",
+            garageId: $garageId,
+            details: ['expense_id' => $expense->id, 'title' => $title, 'amount' => $amount]
+        );
 
         $expense->delete();
 

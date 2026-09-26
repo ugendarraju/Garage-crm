@@ -109,6 +109,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/garages/{garage}/owners', [\App\Http\Controllers\GarageOwnerController::class, 'store'])->name('garage-owners.store');
     Route::post('/garage-owners/{owner}/toggle-active', [\App\Http\Controllers\GarageOwnerController::class, 'toggleActive'])->name('garage-owners.toggle-active');
     Route::post('/garage-owners/{owner}/reset-password', [\App\Http\Controllers\GarageOwnerController::class, 'resetPassword'])->name('garage-owners.reset-password');
+    Route::get('/garages/{garage}/action-logs', [\App\Http\Controllers\ActionLogController::class, 'garageLogs'])->name('garages.action-logs');
+
+    // Action Logs & Audit Trail
+    Route::get('/action-logs', [\App\Http\Controllers\ActionLogController::class, 'index'])->name('action-logs.index');
+    Route::get('/action-logs/export', [\App\Http\Controllers\ActionLogController::class, 'export'])->name('action-logs.export');
 
     Route::get('/service-requests', [\App\Http\Controllers\ServiceRequestController::class, 'index'])->name('service-requests.index');
     Route::post('/service-requests/{id}/approve', [\App\Http\Controllers\ServiceRequestController::class, 'approve'])->name('service-requests.approve');

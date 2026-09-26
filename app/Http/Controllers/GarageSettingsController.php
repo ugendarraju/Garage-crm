@@ -192,6 +192,14 @@ class GarageSettingsController extends Controller
 
             $garage->save();
 
+            \App\Services\ActionLogService::log(
+                action: 'updated',
+                module: 'settings',
+                description: "Updated workshop settings & branding for '{$garage->name}'",
+                garageId: $garage->id,
+                details: ['name' => $garage->name, 'gst_number' => $garage->gst_number, 'upi_id' => $garage->upi_id]
+            );
+
             return redirect()->back()->with('success', 'Garage settings updated successfully.');
         } catch (\Throwable $e) {
             Log::error('Garage settings update error: ' . $e->getMessage(), [

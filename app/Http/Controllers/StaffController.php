@@ -43,7 +43,7 @@ class StaffController extends Controller
             'password' => 'required|string|min:8',
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $validated['name'],
             'phone' => $validated['phone'],
             'email' => $validated['email'],
@@ -52,6 +52,13 @@ class StaffController extends Controller
             'garage_id' => \App\Models\Garage::getActiveGarageId(),
             'is_active' => true,
         ]);
+
+        \App\Services\ActionLogService::log(
+            action: 'created',
+            module: 'staff',
+            description: "Added staff member '{$user->name}' (Role: {$user->role})",
+            details: ['staff_id' => $user->id, 'role' => $user->role, 'email' => $user->email]
+        );
 
         return redirect()->back()->with('success', 'Staff member added successfully.');
     }
@@ -86,6 +93,13 @@ class StaffController extends Controller
 
         $staff->update($data);
 
+        \App\Services\ActionLogService::log(
+            action: 'updated',
+            module: 'staff',
+            description: "Updated staff member '{$staff->name}' (Role: {$staff->role})",
+            details: ['staff_id' => $staff->id, 'role' => $staff->role]
+        );
+
         return redirect()->back()->with('success', 'Staff member updated successfully.');
     }
 
@@ -98,6 +112,14 @@ class StaffController extends Controller
         }
 
         $staff->update(['is_active' => !$staff->is_active]);
+        $status = $staff->is_active ? 'enabled' : 'disabled';
+
+        \App\Services\ActionLogService::log(
+            action: $status,
+            module: 'staff',
+            description: "Toggled staff member '{$staff->name}' status to {$status}",
+            details: ['staff_id' => $staff->id, 'is_active' => $staff->is_active]
+        );
 
         return redirect()->back()->with('success', 'Staff status updated successfully.');
     }
@@ -109,6 +131,16 @@ class StaffController extends Controller
         if ($staff->garage_id !== \App\Models\Garage::getActiveGarageId()) {
             abort(403);
         }
+
+        $name = $staff->name;
+        $role = $staff->role;
+
+        \App\Services\ActionLogService::log(
+            action: 'deleted',
+            module: 'staff',
+            description: "Removed staff member '{$name}' ({$role})",
+            details: ['staff_id' => $staff->id, 'name' => $name, 'role' => $role]
+        );
 
         $staff->delete();
 

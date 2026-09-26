@@ -4,7 +4,8 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title inertia>{{ \App\Services\SystemSettingService::get('crm_name', config('app.name', 'GarageSaarthi')) }}</title>
+        <title inertia>{{ \App\Services\SystemSettingService::get('crm_name', config('app.name', 'PistonCRM')) }}</title>
+        <meta name="crm-name" content="{{ \App\Services\SystemSettingService::get('crm_name', config('app.name', 'PistonCRM')) }}">
         <link rel="icon" href="{{ \App\Services\SystemSettingService::getFaviconUrl() ?: asset('favicon.ico') }}">
 
         <!-- Fonts -->

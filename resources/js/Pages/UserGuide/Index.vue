@@ -41,6 +41,8 @@ const categories = computed(() => {
 
 const allQuickSearchTags = [
     'System backups',
+    'Action logs',
+    'Audit trail',
     'Restore garage',
     'Automated backup',
     'Service reminders',
@@ -70,6 +72,23 @@ const quickSearchTags = computed(() => {
 });
 
 const guides = [
+    {
+        id: 'garage-action-logs',
+        category: 'admin',
+        title: 'Action Logs & Audit Trail: Tracking Garage & Staff Activities',
+        summary: 'Inspect user actions, status changes, inventory adjustments, and payments in real time with IP tracking and CSV export.',
+        keywords: ['action logs', 'audit log', 'activity logs', 'garage action logs', 'staff actions', 'security audit', 'track changes'],
+        actionRoute: 'action-logs.index',
+        actionText: 'Open Action Logs',
+        steps: [
+            'Access Action Logs from Master Dashboard: Click **Audit Action Logs** in the top header or click the **Action Logs** button beside any workshop in the Garages table to open the quick audit modal.',
+            'Access from Workshop Sidebar: Garage owners and workshop managers can click **Action Logs** in their sidebar menu to monitor all daily technician activities.',
+            'Search & Filter by Module: Filter actions by module (Job Cards, Inventory, Purchases, Expenses, Sales, Customers, Staff, Settings, Auth).',
+            'Inspect Payloads & Differences: Click **Inspect / View Payload** on any log entry to view the exact JSON event metadata, including IDs, old vs. new values, and operator IP addresses.',
+            'Export Audit Trail for Accounting & Compliance: Click **Export CSV Audit Log** to download timestamped records for administrative review.'
+        ],
+        tip: 'Action logs capture critical events with the operator user identity and IP address, ensuring accountability across your entire workshop team.'
+    },
     {
         id: 'master-backups-restore',
         category: 'admin',

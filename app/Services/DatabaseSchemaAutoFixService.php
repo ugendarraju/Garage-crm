@@ -106,8 +106,33 @@ class DatabaseSchemaAutoFixService
             } catch (\Throwable $e) {
                 Log::warning('AutoFix: Failed to ensure expenses table: ' . $e->getMessage());
             }
+
+            // 4. Ensure 'action_logs' table exists
+            try {
+                if (!Schema::hasTable('action_logs')) {
+                    Schema::create('action_logs', function ($table) {
+                        $table->id();
+                        $table->unsignedBigInteger('garage_id')->nullable()->index();
+                        $table->unsignedBigInteger('user_id')->nullable()->index();
+                        $table->string('user_name')->nullable();
+                        $table->string('user_role')->nullable();
+                        $table->string('action', 50)->index();
+                        $table->string('module', 50)->index();
+                        $table->text('description');
+                        $table->json('details')->nullable();
+                        $table->string('ip_address', 45)->nullable();
+                        $table->timestamps();
+
+                        $table->index(['garage_id', 'created_at']);
+                        $table->index(['garage_id', 'module']);
+                    });
+                }
+            } catch (\Throwable $e) {
+                Log::warning('AutoFix: Failed to ensure action_logs table: ' . $e->getMessage());
+            }
         } catch (\Throwable $e) {
             Log::warning('DatabaseSchemaAutoFixService warning: ' . $e->getMessage());
         }
     }
 }
+

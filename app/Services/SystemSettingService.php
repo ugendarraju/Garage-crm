@@ -12,7 +12,7 @@ class SystemSettingService
      * Default settings
      */
     protected static array $defaults = [
-        'crm_name' => 'GarageSaarthi',
+        'crm_name' => 'PistonCRM',
         'crm_subheading' => 'Smart Workspace',
         'crm_logo_path' => null,
         'crm_logo_size' => 36,

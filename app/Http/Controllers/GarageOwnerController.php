@@ -28,7 +28,7 @@ class GarageOwnerController extends Controller
             'password' => 'required|string|min:8',
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
@@ -37,6 +37,14 @@ class GarageOwnerController extends Controller
             'garage_id' => $garage->id,
             'is_active' => true,
         ]);
+
+        \App\Services\ActionLogService::log(
+            action: 'created',
+            module: 'staff',
+            description: "Added owner '{$user->name}' ({$user->email}) to garage '{$garage->name}'",
+            garageId: $garage->id,
+            details: ['email' => $user->email, 'role' => 'owner']
+        );
 
         return redirect()->back()->with('success', 'New owner added successfully.');
     }
@@ -56,6 +64,13 @@ class GarageOwnerController extends Controller
         $user->save();
 
         $status = $user->is_active ? 'enabled' : 'disabled';
+        \App\Services\ActionLogService::log(
+            action: $user->is_active ? 'enabled' : 'disabled',
+            module: 'staff',
+            description: "Toggled owner '{$user->name}' status to {$status}",
+            garageId: $user->garage_id
+        );
+
         return redirect()->back()->with('success', "Owner account {$status} successfully.");
     }
 
@@ -72,6 +87,13 @@ class GarageOwnerController extends Controller
         $newPassword = $request->input('password') ?: Str::random(12);
         $user->password = Hash::make($newPassword);
         $user->save();
+
+        \App\Services\ActionLogService::log(
+            action: 'reset_password',
+            module: 'auth',
+            description: "Reset password for garage owner '{$user->name}'",
+            garageId: $user->garage_id
+        );
 
         return redirect()->back()->with([
             'success' => "Password reset for {$user->name}. New Password: {$newPassword}"

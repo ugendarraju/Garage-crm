@@ -42,7 +42,7 @@ class HandleInertiaRequests extends Middleware
         }
         
         $systemSettings = [
-            'name' => \App\Services\SystemSettingService::get('crm_name', 'GarageSaarthi'),
+            'name' => \App\Services\SystemSettingService::get('crm_name', 'PistonCRM'),
             'subheading' => \App\Services\SystemSettingService::get('crm_subheading', 'Smart Workspace'),
             'logo_url' => \App\Services\SystemSettingService::getLogoUrl(),
             'logo_size' => (int) \App\Services\SystemSettingService::get('crm_logo_size', 36),
