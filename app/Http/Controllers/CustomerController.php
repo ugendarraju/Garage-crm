@@ -283,14 +283,14 @@ class CustomerController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $temporaryPassword = 'PC#' . rand(100000, 999999);
+        $temporaryPassword = request()->input('password') ?: ('PC#' . rand(100000, 999999));
         \App\Services\DatabaseSchemaAutoFixService::ensureSchemaIsUpToDate();
 
         $updateData = [
             'password' => bcrypt($temporaryPassword),
         ];
         if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'must_change_password')) {
-            $updateData['must_change_password'] = true;
+            $updateData['must_change_password'] = request()->filled('password') ? false : true;
         }
         $customer->user->update($updateData);
 
