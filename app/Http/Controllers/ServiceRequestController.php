@@ -161,14 +161,21 @@ class ServiceRequestController extends Controller
             $isNewUser = true;
             $tempPassword = 'PC#' . rand(100000, 999999);
             
-            $user = \App\Models\User::create([
+            \App\Services\DatabaseSchemaAutoFixService::ensureSchemaIsUpToDate();
+            
+            $userData = [
                 'name' => $serviceRequest->customer_name,
                 'email' => $serviceRequest->email,
                 'phone' => $serviceRequest->phone,
                 'password' => \Illuminate\Support\Facades\Hash::make($tempPassword),
                 'role' => 'customer',
-                'must_change_password' => true,
-            ]);
+            ];
+
+            if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'must_change_password')) {
+                $userData['must_change_password'] = true;
+            }
+
+            $user = \App\Models\User::create($userData);
 
             // Send invite email if email is present
             if (!empty($serviceRequest->email)) {

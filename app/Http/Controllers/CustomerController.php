@@ -82,14 +82,22 @@ class CustomerController extends Controller
         if (!$user) {
             $isNewUser = true;
             $tempPassword = 'PC#' . rand(100000, 999999);
-            $user = User::create([
+            
+            \App\Services\DatabaseSchemaAutoFixService::ensureSchemaIsUpToDate();
+
+            $userData = [
                 'name' => $validated['name'],
                 'phone' => $validated['phone'],
                 'email' => $validated['email'] ?? 'customer_' . preg_replace('/[^0-9]/', '', $validated['phone']) . '@example.com',
                 'role' => 'customer',
                 'password' => bcrypt($tempPassword),
-                'must_change_password' => true,
-            ]);
+            ];
+
+            if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'must_change_password')) {
+                $userData['must_change_password'] = true;
+            }
+
+            $user = User::create($userData);
         } else {
             // Update email if provided and user has placeholder email
             if (!empty($validated['email']) && (str_contains($user->email, 'customer_') || empty($user->email))) {
@@ -276,10 +284,15 @@ class CustomerController extends Controller
         }
 
         $temporaryPassword = 'PC#' . rand(100000, 999999);
-        $customer->user->update([
+        \App\Services\DatabaseSchemaAutoFixService::ensureSchemaIsUpToDate();
+
+        $updateData = [
             'password' => bcrypt($temporaryPassword),
-            'must_change_password' => true,
-        ]);
+        ];
+        if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'must_change_password')) {
+            $updateData['must_change_password'] = true;
+        }
+        $customer->user->update($updateData);
 
         $inviteSent = false;
         $email = $customer->user->email;
