@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import SettingsNav from '@/Components/SettingsNav.vue';
 import { Head, router, Link } from '@inertiajs/vue3';
 import { ref, reactive, watch } from 'vue';
 
@@ -191,6 +192,8 @@ const formatRelativeTime = (dateStr) => {
         </template>
 
         <div class="py-6 sm:py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+            <SettingsNav v-if="!isMasterAdmin" />
+
             <!-- Stats Grid -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div class="bg-white dark:bg-zinc-800 p-5 rounded-2xl border border-gray-100 dark:border-zinc-700 shadow-xs">

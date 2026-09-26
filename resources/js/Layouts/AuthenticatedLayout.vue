@@ -54,47 +54,107 @@ const crmInitials = computed(() => {
     return name.substring(0, 2).toUpperCase();
 });
 
-const navigation = computed(() => {
+const isSettingsActive = computed(() => {
+    return (
+        route().current('settings.*') ||
+        route().current('service-types.*') ||
+        route().current('vehicle-brands.*') ||
+        route().current('models.*') ||
+        route().current('coupons.*') ||
+        route().current('action-logs.*') ||
+        route().current('staff.*')
+    );
+});
+
+const isSettingsOpen = ref(isSettingsActive.value);
+
+watch(isSettingsActive, (val) => {
+    if (val) {
+        isSettingsOpen.value = true;
+    }
+});
+
+const navigationGroups = computed(() => {
     if (user.value.role === 'super_admin' && !activeGarageId.value) {
         return [
-            { name: 'Garages', href: route('garages.index'), current: route().current('garages.*'), icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
-            { name: 'Action Logs', href: route('action-logs.index'), current: route().current('action-logs.*'), icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-            { name: 'System Backups', href: route('admin.backups.index'), current: route().current('admin.backups.*'), icon: 'M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4' },
-            { name: 'Settings', href: route('admin.settings.index'), current: route().current('admin.settings.*'), icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
-            { name: 'User Guide', href: route('user-guide'), current: route().current('user-guide'), icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' }
+            {
+                title: 'Platform',
+                items: [
+                    { name: 'Garages', href: route('garages.index'), current: route().current('garages.*'), icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
+                    { name: 'Action Logs', href: route('action-logs.index'), current: route().current('action-logs.*'), icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+                    { name: 'System Backups', href: route('admin.backups.index'), current: route().current('admin.backups.*'), icon: 'M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4' }
+                ]
+            },
+            {
+                title: 'System',
+                items: [
+                    { name: 'Settings', href: route('admin.settings.index'), current: route().current('admin.settings.*'), icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
+                    { name: 'User Guide', href: route('user-guide'), current: route().current('user-guide'), icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' }
+                ]
+            }
         ];
     }
+
     if (user.value.role === 'customer') {
         return [
-            { name: 'My Dashboard', href: route('dashboard'), current: route().current('dashboard'), icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-            { name: 'My Job Cards', href: route('job-cards.index'), current: route().current('job-cards.*'), icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
-            { name: 'My Vehicles', href: route('vehicles.index'), current: route().current('vehicles.*'), icon: 'M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0' },
-            { name: 'User Guide', href: route('user-guide'), current: route().current('user-guide'), icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' }
+            {
+                title: 'Portal',
+                items: [
+                    { name: 'My Dashboard', href: route('dashboard'), current: route().current('dashboard'), icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+                    { name: 'My Job Cards', href: route('job-cards.index'), current: route().current('job-cards.*'), icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
+                    { name: 'My Vehicles', href: route('vehicles.index'), current: route().current('vehicles.*'), icon: 'M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0' },
+                    { name: 'User Guide', href: route('user-guide'), current: route().current('user-guide'), icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' }
+                ]
+            }
         ];
     }
-    
+
     const isOwner = ['owner', 'super_admin'].includes(user.value.role);
 
     return [
-        { name: 'Dashboard', href: route('dashboard'), current: route().current('dashboard'), icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-        { name: 'Service Requests', href: route('service-requests.index'), current: route().current('service-requests.*'), icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
-        { name: 'Job Cards', href: route('job-cards.index'), current: route().current('job-cards.*'), icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
-        { name: 'Service Reminders', href: route('service-reminders.index'), current: route().current('service-reminders.*'), icon: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9' },
-        { name: 'Vehicles & History', href: route('vehicles.index'), current: route().current('vehicles.*'), icon: 'M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0' },
-        { name: 'Inventory', href: route('inventory.index'), current: route().current('inventory.*'), icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
-        { name: 'Purchases', href: route('purchases.index'), current: route().current('purchases.*'), icon: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z' },
-        { name: 'Sales', href: route('sales.index'), current: route().current('sales.*'), icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-        ...(isOwner ? [
-            { name: 'Expenses & Profit', href: route('expenses.index'), current: route().current('expenses.*'), icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' },
-            { name: 'Action Logs', href: route('action-logs.index'), current: route().current('action-logs.*'), icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' }
-        ] : []),
-        { name: 'Coupons', href: route('coupons.index'), current: route().current('coupons.*'), icon: 'M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z' },
-        { name: 'Vehicle Database', href: route('vehicle-brands.index'), current: route().current('vehicle-brands.*') || route().current('models.*'), icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z' },
-        { name: 'Customers', href: route('customers.index'), current: route().current('customers.*'), icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' },
-        { name: 'User Management', href: route('staff.index'), current: route().current('staff.*'), icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
-        { name: 'Service Types', href: route('service-types.index'), current: route().current('service-types.*'), icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
-        { name: 'Settings', href: route('settings.edit'), current: route().current('settings.*'), icon: 'M4.5 12a7.5 7.5 0 0015 0m-15 0a7.5 7.5 0 1115 0m-15 0H3m16.5 0H21m-1.5 0a7.5 7.5 0 11-15 0m15 0a7.5 7.5 0 10-15 0M9 12h.008v.008H9V12z' },
-        { name: 'User Guide', href: route('user-guide'), current: route().current('user-guide'), icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' }
+        {
+            title: 'Operations',
+            items: [
+                { name: 'Dashboard', href: route('dashboard'), current: route().current('dashboard'), icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+                { name: 'Job Cards', href: route('job-cards.index'), current: route().current('job-cards.*'), icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
+                { name: 'Service Requests', href: route('service-requests.index'), current: route().current('service-requests.*'), icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
+                { name: 'Service Reminders', href: route('service-reminders.index'), current: route().current('service-reminders.*'), icon: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9' },
+                { name: 'Vehicles & History', href: route('vehicles.index'), current: route().current('vehicles.*'), icon: 'M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0' },
+                { name: 'Customers', href: route('customers.index'), current: route().current('customers.*'), icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' }
+            ]
+        },
+        {
+            title: 'Inventory & Billing',
+            items: [
+                { name: 'Inventory', href: route('inventory.index'), current: route().current('inventory.*'), icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
+                { name: 'Purchases', href: route('purchases.index'), current: route().current('purchases.*'), icon: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z' },
+                { name: 'Sales', href: route('sales.index'), current: route().current('sales.*'), icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+                ...(isOwner ? [
+                    { name: 'Expenses & Profit', href: route('expenses.index'), current: route().current('expenses.*'), icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' }
+                ] : [])
+            ]
+        },
+        {
+            title: 'Administration',
+            items: [
+                {
+                    name: 'Settings & Master Data',
+                    href: route('settings.edit'),
+                    current: isSettingsActive.value,
+                    icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
+                    isDropdown: true,
+                    subItems: [
+                        { name: 'General Settings', href: route('settings.edit'), current: route().current('settings.*') },
+                        ...(isOwner ? [{ name: 'Staff & Roles', href: route('staff.index'), current: route().current('staff.*') }] : []),
+                        { name: 'Service Types', href: route('service-types.index'), current: route().current('service-types.*') },
+                        { name: 'Vehicle Database', href: route('vehicle-brands.index'), current: route().current('vehicle-brands.*') || route().current('models.*') },
+                        { name: 'Coupons', href: route('coupons.index'), current: route().current('coupons.*') },
+                        ...(isOwner ? [{ name: 'Action Logs', href: route('action-logs.index'), current: route().current('action-logs.*') }] : []),
+                    ]
+                },
+                { name: 'User Guide', href: route('user-guide'), current: route().current('user-guide'), icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' }
+            ]
+        }
     ];
 });
 
@@ -137,14 +197,77 @@ const exitGarage = () => {
                     </Link>
                 </div>
                 
-                <nav class="flex flex-1 flex-col overflow-y-auto px-4 py-6 space-y-1">
-                    <Link v-for="item in navigation" :key="item.name" :href="item.href"
-                        :class="[item.current ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900', 'group flex items-center rounded-lg px-4 py-3 text-sm font-semibold transition-all duration-200']">
-                        <svg class="mr-3 h-5 w-5 flex-shrink-0" :class="item.current ? 'text-primary-600' : 'text-gray-400 group-hover:text-gray-600'" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
-                        </svg>
-                        {{ item.name }}
-                    </Link>
+                <nav class="flex flex-1 flex-col overflow-y-auto px-4 py-5 space-y-5">
+                    <div v-for="(group, gIdx) in navigationGroups" :key="gIdx" class="space-y-1">
+                        <div v-if="group.title" class="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                            {{ group.title }}
+                        </div>
+                        
+                        <template v-for="item in group.items" :key="item.name">
+                            <!-- Dropdown Item (Settings & Master Data) -->
+                            <div v-if="item.isDropdown" class="space-y-1">
+                                <div class="flex items-center justify-between rounded-xl transition-all duration-200"
+                                    :class="[item.current ? 'bg-orange-50 text-orange-600 font-bold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900']">
+                                    <Link :href="item.href" class="flex-1 flex items-center px-3.5 py-2.5 text-sm">
+                                        <svg class="mr-3 h-5 w-5 flex-shrink-0" :class="item.current ? 'text-orange-500' : 'text-gray-400 group-hover:text-gray-600'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
+                                        </svg>
+                                        <span>{{ item.name }}</span>
+                                    </Link>
+                                    <button
+                                        type="button"
+                                        @click.stop="isSettingsOpen = !isSettingsOpen"
+                                        class="p-2 mr-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-black/5 transition"
+                                        title="Toggle Submenu"
+                                    >
+                                        <svg :class="[isSettingsOpen ? 'rotate-90 text-orange-500' : 'text-gray-400', 'h-4 w-4 transform transition-transform']" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <!-- Submenu items -->
+                                <div v-show="isSettingsOpen" class="pl-6 pr-1 py-1 space-y-1 border-l-2 border-orange-100 ml-4">
+                                    <Link
+                                        v-for="sub in item.subItems"
+                                        :key="sub.name"
+                                        :href="sub.href"
+                                        :class="[
+                                            sub.current
+                                                ? 'bg-orange-50 text-orange-600 font-bold'
+                                                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-medium',
+                                            'flex items-center rounded-lg px-3 py-1.5 text-xs transition-colors'
+                                        ]"
+                                    >
+                                        {{ sub.name }}
+                                    </Link>
+                                </div>
+                            </div>
+
+                            <!-- Standard Link -->
+                            <Link
+                                v-else
+                                :href="item.href"
+                                :class="[
+                                    item.current
+                                        ? 'bg-orange-50 text-orange-600 font-bold shadow-xs'
+                                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium',
+                                    'group flex items-center rounded-xl px-3.5 py-2.5 text-sm transition-all duration-200'
+                                ]"
+                            >
+                                <svg
+                                    class="mr-3 h-5 w-5 flex-shrink-0"
+                                    :class="item.current ? 'text-orange-500' : 'text-gray-400 group-hover:text-gray-600'"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
+                                </svg>
+                                <span>{{ item.name }}</span>
+                            </Link>
+                        </template>
+                    </div>
                 </nav>
             </aside>
 
@@ -244,15 +367,46 @@ const exitGarage = () => {
                             </svg>
                         </button>
                     </div>
-                    <nav class="px-4 py-6 space-y-2">
-                        <Link v-for="item in navigation" :key="item.name" :href="item.href"
-                            :class="[item.current ? 'bg-gray-800 text-white ring-1 ring-gray-700' : 'text-gray-300 hover:bg-gray-800 hover:text-white', 'group flex items-center rounded-lg px-4 py-3 text-base font-semibold transition-colors']"
-                            @click="showingNavigationDropdown = false">
-                            <svg class="mr-4 h-6 w-6" :class="item.current ? 'text-primary-500' : 'text-gray-500'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
-                            </svg>
-                            {{ item.name }}
-                        </Link>
+                    <nav class="flex-1 overflow-y-auto px-4 py-5 space-y-4">
+                        <div v-for="(group, gIdx) in navigationGroups" :key="gIdx" class="space-y-1">
+                            <div v-if="group.title" class="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                                {{ group.title }}
+                            </div>
+                            <template v-for="item in group.items" :key="item.name">
+                                <!-- Dropdown Item -->
+                                <div v-if="item.isDropdown" class="space-y-1">
+                                    <div class="flex items-center justify-between rounded-lg"
+                                        :class="[item.current ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white']">
+                                        <Link :href="item.href" class="flex-1 flex items-center px-4 py-2.5 text-sm font-semibold" @click="showingNavigationDropdown = false">
+                                            <svg class="mr-3 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
+                                            </svg>
+                                            {{ item.name }}
+                                        </Link>
+                                        <button type="button" @click.stop="isSettingsOpen = !isSettingsOpen" class="p-2 mr-1 text-gray-400 hover:text-white">
+                                            <svg :class="[isSettingsOpen ? 'rotate-90 text-orange-400' : '', 'h-4 w-4 transform transition-transform']" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div v-show="isSettingsOpen" class="pl-8 pr-2 py-1 space-y-1 border-l border-gray-700 ml-4">
+                                        <Link v-for="sub in item.subItems" :key="sub.name" :href="sub.href"
+                                            :class="[sub.current ? 'bg-gray-800 text-orange-400 font-bold' : 'text-gray-400 hover:text-white', 'block px-3 py-1.5 text-xs rounded-md transition-colors']"
+                                            @click="showingNavigationDropdown = false">
+                                            {{ sub.name }}
+                                        </Link>
+                                    </div>
+                                </div>
+                                <Link v-else :href="item.href"
+                                    :class="[item.current ? 'bg-gray-800 text-white font-bold' : 'text-gray-300 hover:bg-gray-800 hover:text-white', 'group flex items-center rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors']"
+                                    @click="showingNavigationDropdown = false">
+                                    <svg class="mr-3 h-5 w-5" :class="item.current ? 'text-orange-400' : 'text-gray-500'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
+                                    </svg>
+                                    {{ item.name }}
+                                </Link>
+                            </template>
+                        </div>
                     </nav>
                 </div>
 

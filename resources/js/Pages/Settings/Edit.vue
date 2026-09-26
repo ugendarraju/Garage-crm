@@ -1,6 +1,7 @@
 <script setup>
 import { useForm, Head } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import SettingsNav from '@/Components/SettingsNav.vue';
 import { ref, computed } from 'vue';
 
 const props = defineProps({
@@ -100,6 +101,8 @@ const submit = () => {
 
     <AuthenticatedLayout>
         <div class="px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto py-8">
+            <SettingsNav />
+
             <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight mb-8">Garage Settings</h1>
 
             <!-- Feedback Notifications -->

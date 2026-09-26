@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import SettingsNav from '@/Components/SettingsNav.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import Modal from '@/Components/Modal.vue';
 
@@ -65,6 +66,8 @@ const deleteServiceType = (id) => {
 
     <AuthenticatedLayout>
         <div class="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto py-8">
+            <SettingsNav />
+
             <div class="sm:flex sm:items-center">
                 <div class="sm:flex-auto">
                     <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Service Types</h1>
