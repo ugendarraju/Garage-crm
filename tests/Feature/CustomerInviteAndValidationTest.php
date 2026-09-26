@@ -134,4 +134,70 @@ class CustomerInviteAndValidationTest extends TestCase
         $dashResponse = $this->actingAs($customerUser)->get(route('dashboard'));
         $dashResponse->assertOk();
     }
+
+    public function test_service_request_submission_rejects_invalid_phone(): void
+    {
+        [$garage, $owner] = $this->createGarageWithOwner();
+
+        $response = $this->post(route('service-requests.store'), [
+            'garage_id' => $garage->id,
+            'customer_name' => 'John Doe',
+            'email' => 'john' . uniqid() . '@example.com',
+            'phone' => 'abcde123invalid',
+            'vehicle_brand' => 'Honda',
+            'vehicle_model' => 'Civic',
+            'vehicle_year' => '2022',
+            'issues' => [
+                ['description' => 'Brake noise'],
+            ],
+        ]);
+
+        $response->assertSessionHasErrors(['phone']);
+    }
+
+    public function test_service_request_approval_generates_temp_password_and_invites_customer(): void
+    {
+        Mail::fake();
+        [$garage, $owner] = $this->createGarageWithOwner();
+
+        $customerEmail = 'sr_customer' . uniqid() . '@example.com';
+        $customerPhone = '9812' . rand(100000, 999999);
+
+        // Submit service request
+        $serviceRequest = \App\Models\ServiceRequest::create([
+            'garage_id' => $garage->id,
+            'customer_name' => 'Sara Connor',
+            'email' => $customerEmail,
+            'phone' => $customerPhone,
+            'vehicle_brand' => 'Toyota',
+            'vehicle_model' => 'Corolla',
+            'vehicle_year' => '2021',
+            'issues' => json_encode([['description' => 'Engine oil change', 'image_path' => null]]),
+            'status' => 'pending',
+        ]);
+
+        // Garage owner approves request
+        $response = $this->actingAs($owner)
+            ->withSession(['active_garage_id' => $garage->id])
+            ->post(route('service-requests.approve', $serviceRequest->id));
+
+        $response->assertSessionHasNoErrors();
+        $response->assertSessionHas('new_customer_credentials');
+
+        $credentials = session('new_customer_credentials');
+        $this->assertNotEmpty($credentials['temporary_password']);
+        $this->assertTrue(str_starts_with($credentials['temporary_password'], 'PC#'));
+
+        $user = User::where('email', $customerEmail)->first();
+        $this->assertNotNull($user);
+        $this->assertTrue((bool)$user->must_change_password);
+        $this->assertTrue(Hash::check($credentials['temporary_password'], $user->password));
+
+        Mail::assertSent(CustomerInvitationMail::class, function ($mail) use ($customerEmail) {
+            return $mail->hasTo($customerEmail);
+        });
+
+        $serviceRequest->refresh();
+        $this->assertEquals('approved', $serviceRequest->status);
+    }
 }

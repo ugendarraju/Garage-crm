@@ -184,7 +184,16 @@ const submit = () => {
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone Number</label>
-                            <input v-model="form.phone" type="text" required class="w-full rounded-xl border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 dark:bg-zinc-900 dark:border-zinc-700 dark:text-white">
+                            <input
+                                v-model="form.phone"
+                                @input="form.phone = form.phone.replace(/[^0-9+]/g, '')"
+                                type="tel"
+                                inputmode="tel"
+                                maxlength="16"
+                                placeholder="+919876543210"
+                                required
+                                class="w-full rounded-xl border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 dark:bg-zinc-900 dark:border-zinc-700 dark:text-white"
+                            >
                             <div v-if="form.errors.phone" class="text-red-500 text-sm mt-1">{{ form.errors.phone }}</div>
                         </div>
                     </div>

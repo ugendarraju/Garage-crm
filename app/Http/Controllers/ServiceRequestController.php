@@ -53,11 +53,18 @@ class ServiceRequestController extends Controller
     // Public: Submit the booking form
     public function store(Request $request)
     {
+        // Sanitize phone
+        if ($request->has('phone')) {
+            $request->merge([
+                'phone' => preg_replace('/[^\+0-9]/', '', (string) $request->input('phone'))
+            ]);
+        }
+
         $validated = $request->validate([
             'garage_id' => 'required|exists:garages,id',
             'customer_name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:20',
+            'phone' => ['required', 'string', 'regex:/^\+?[0-9]{7,15}$/'],
             'vehicle_brand' => 'required|string|max:255',
             'vehicle_model' => 'required|string|max:255',
             'vehicle_year' => 'required',
@@ -66,6 +73,8 @@ class ServiceRequestController extends Controller
             'issues' => 'required|array|min:1|max:5',
             'issues.*.description' => 'required|string|max:1000',
             'issues.*.image' => 'nullable|image|max:5120', // max 5MB
+        ], [
+            'phone.regex' => 'The phone number must contain 7 to 15 digits (digits and optional leading + only).',
         ]);
 
         // Check if existing user
@@ -131,29 +140,64 @@ class ServiceRequestController extends Controller
 
         $serviceRequest->update(['status' => 'approved']);
         
-        // Check if user already exists
-        $user = \App\Models\User::where('email', $serviceRequest->email)->first();
-        
-        $garageId = clone ($garageId ?: $serviceRequest->garage_id);
+        $effectiveGarageId = $garageId ?: $serviceRequest->garage_id;
+
+        // Check if user already exists by email or phone
+        $user = \App\Models\User::where(function ($q) use ($serviceRequest) {
+            if (!empty($serviceRequest->email)) {
+                $q->where('email', $serviceRequest->email);
+            }
+            if (!empty($serviceRequest->phone)) {
+                $q->orWhere('phone', $serviceRequest->phone);
+            }
+        })->first();
+
+        $tempPassword = null;
+        $isNewUser = false;
+        $inviteSent = false;
 
         if (!$user) {
             // New user workflow
-            $password = \Illuminate\Support\Str::random(8);
+            $isNewUser = true;
+            $tempPassword = 'PC#' . rand(100000, 999999);
             
             $user = \App\Models\User::create([
                 'name' => $serviceRequest->customer_name,
                 'email' => $serviceRequest->email,
                 'phone' => $serviceRequest->phone,
-                'password' => \Illuminate\Support\Facades\Hash::make($password),
+                'password' => \Illuminate\Support\Facades\Hash::make($tempPassword),
                 'role' => 'customer',
+                'must_change_password' => true,
             ]);
+
+            // Send invite email if email is present
+            if (!empty($serviceRequest->email)) {
+                try {
+                    $garage = \App\Models\Garage::find($effectiveGarageId);
+                    \Illuminate\Support\Facades\Mail::to($serviceRequest->email)->send(
+                        new \App\Mail\CustomerInvitationMail($user, $tempPassword, $garage)
+                    );
+                    $inviteSent = true;
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("Failed to send customer invitation email on service request approval: " . $e->getMessage());
+                }
+            }
         } else {
-            // Existing user workflow
+            // Existing user workflow: update missing details if needed
+            if (empty($user->phone) && !empty($serviceRequest->phone)) {
+                $user->update(['phone' => $serviceRequest->phone]);
+            }
+            if (empty($user->email) && !empty($serviceRequest->email)) {
+                $user->update(['email' => $serviceRequest->email]);
+            }
         }
 
         $customer = \App\Models\Customer::firstOrCreate(
-            ['user_id' => $user->id, 'garage_id' => $garageId],
-            ['address' => '']
+            ['user_id' => $user->id, 'garage_id' => $effectiveGarageId],
+            [
+                'address' => '',
+                'whatsapp_number' => $serviceRequest->phone,
+            ]
         );
 
         // Attempt to link vehicle
@@ -169,7 +213,7 @@ class ServiceRequestController extends Controller
                     'model_id' => $vehicleModel->id,
                 ],
                 [
-                    'garage_id' => $garageId,
+                    'garage_id' => $effectiveGarageId,
                     'year' => $serviceRequest->vehicle_year,
                     'registration_number' => 'TBD',
                     'vehicle_type' => 'Car',
@@ -182,7 +226,7 @@ class ServiceRequestController extends Controller
         // Create Job Card
         if ($vehicleId) {
             $jobCard = \App\Models\JobCard::create([
-                'garage_id' => $garageId,
+                'garage_id' => $effectiveGarageId,
                 'job_number' => 'JC-' . strtoupper(\Illuminate\Support\Str::random(8)),
                 'customer_id' => $customer->id,
                 'vehicle_id' => $vehicleId,
@@ -212,9 +256,40 @@ class ServiceRequestController extends Controller
             }
         }
 
-        return redirect()->back()->with([
-            'success' => 'Request approved. Job Card generated & Customer notified.'
-        ]);
+        \App\Services\ActionLogService::log(
+            action: 'approve',
+            module: 'service_requests',
+            description: "Approved service request #{$serviceRequest->id} for '{$user->name}'",
+            garageId: $effectiveGarageId,
+            details: [
+                'service_request_id' => $serviceRequest->id,
+                'customer_id' => $customer->id,
+                'user_id' => $user->id,
+                'is_new_user' => $isNewUser,
+                'invite_sent' => $inviteSent,
+            ]
+        );
+
+        $flashData = [
+            'success' => $isNewUser
+                ? ($inviteSent 
+                    ? "Service Request approved! Account created and invitation email with temporary password was sent to {$user->email}."
+                    : "Service Request approved and account created for customer.")
+                : "Service Request approved and linked to existing customer account.",
+        ];
+
+        if ($isNewUser && $tempPassword) {
+            $flashData['new_customer_credentials'] = [
+                'name' => $user->name,
+                'phone' => $user->phone,
+                'email' => $user->email,
+                'whatsapp_number' => $user->phone,
+                'temporary_password' => $tempPassword,
+                'invite_sent' => $inviteSent,
+            ];
+        }
+
+        return redirect()->back()->with($flashData);
     }
 
     // Admin: Decline a request
