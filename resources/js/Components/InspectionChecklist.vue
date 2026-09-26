@@ -178,27 +178,39 @@ const summaryStats = computed(() => {
                     <h4 class="text-xs sm:text-sm font-bold text-gray-800 uppercase tracking-wider">{{ section.name }}</h4>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3">
                     <div
                         v-for="item in section.items"
                         :key="item"
-                        class="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-white border border-gray-200 shadow-xs hover:border-gray-300 transition-all gap-2.5"
+                        class="flex flex-col justify-between p-3 rounded-xl bg-white border border-gray-200/90 shadow-2xs hover:border-gray-300 transition-all gap-2.5"
                     >
-                        <div class="flex items-center gap-2 min-w-0 pr-1">
-                            <span class="text-xs sm:text-sm font-semibold text-gray-900 leading-snug break-words">
+                        <div class="flex items-center justify-between gap-2 min-w-0">
+                            <span class="text-xs sm:text-sm font-bold text-gray-900 leading-snug break-words">
                                 {{ item }}
+                            </span>
+                            <span
+                                v-if="!readonly"
+                                :class="[
+                                    'text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded shrink-0',
+                                    getItemStatus(section.id, item) === 'ok' ? 'bg-emerald-100 text-emerald-800' :
+                                    getItemStatus(section.id, item) === 'attention' ? 'bg-amber-100 text-amber-800' :
+                                    getItemStatus(section.id, item) === 'damaged' ? 'bg-rose-100 text-rose-800' :
+                                    'bg-gray-100 text-gray-500'
+                                ]"
+                            >
+                                {{ getItemStatus(section.id, item) === 'attention' ? 'ATTN' : getItemStatus(section.id, item).toUpperCase() }}
                             </span>
                         </div>
 
                         <!-- Interactive Pills -->
-                        <div v-if="!readonly" class="inline-flex rounded-lg shadow-xs overflow-hidden border border-gray-200 shrink-0 w-full sm:w-auto" role="group">
+                        <div v-if="!readonly" class="inline-flex rounded-lg shadow-2xs overflow-hidden border border-gray-200 w-full" role="group">
                             <button
                                 v-for="opt in STATUS_OPTIONS"
                                 :key="opt.value"
                                 type="button"
                                 @click="setItemStatus(section.id, item, opt.value)"
                                 :class="[
-                                    'flex-1 sm:flex-initial px-2.5 py-1 text-xs font-bold transition-all text-center border-r last:border-r-0',
+                                    'flex-1 py-1.5 px-1 text-xs font-bold transition-all text-center border-r last:border-r-0',
                                     getItemStatus(section.id, item) === opt.value
                                         ? opt.activeBg
                                         : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
@@ -209,7 +221,7 @@ const summaryStats = computed(() => {
                         </div>
 
                         <!-- Readonly Badge -->
-                        <div v-else class="shrink-0 self-start sm:self-center">
+                        <div v-else class="shrink-0 mt-1">
                             <span
                                 v-if="getItemStatus(section.id, item) === 'ok'"
                                 class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-800"
