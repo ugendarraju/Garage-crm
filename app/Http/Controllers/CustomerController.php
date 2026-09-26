@@ -55,33 +55,53 @@ class CustomerController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20' . ($userId ? '' : '|unique:users,phone'),
+            'phone' => [
+                'required',
+                'string',
+                'regex:/^\+?[0-9]{7,15}$/',
+                $userId ? '' : 'unique:users,phone'
+            ],
             'email' => 'nullable|email|max:255|unique:users,email' . ($userId ? ',' . $userId : ''),
             'address' => 'nullable|string',
             'gst_number' => 'nullable|string|max:50',
-            'whatsapp_number' => 'nullable|string|max:20',
+            'whatsapp_number' => ['nullable', 'string', 'regex:/^\+?[0-9]{7,15}$/'],
             
             'vehicles' => 'nullable|array',
             'vehicles.*.registration_number' => 'required|string|max:20',
             'vehicles.*.brand_id' => 'required|exists:vehicle_brands,id',
             'vehicles.*.model_id' => 'required|exists:vehicle_models,id',
+        ], [
+            'phone.regex' => 'The phone number must contain 7 to 15 digits (digits and optional leading + only).',
+            'whatsapp_number.regex' => 'The WhatsApp number must contain 7 to 15 digits.',
         ]);
 
-        $user = User::firstOrCreate(
-            ['phone' => $validated['phone']],
-            [
+        $tempPassword = null;
+        $isNewUser = false;
+        $user = User::where('phone', $validated['phone'])->first();
+
+        if (!$user) {
+            $isNewUser = true;
+            $tempPassword = 'PC#' . rand(100000, 999999);
+            $user = User::create([
                 'name' => $validated['name'],
-                'email' => $validated['email'] ?? 'customer_' . $validated['phone'] . '@example.com',
+                'phone' => $validated['phone'],
+                'email' => $validated['email'] ?? 'customer_' . preg_replace('/[^0-9]/', '', $validated['phone']) . '@example.com',
                 'role' => 'customer',
-                'password' => bcrypt(Str::random(12))
-            ]
-        );
+                'password' => bcrypt($tempPassword),
+                'must_change_password' => true,
+            ]);
+        } else {
+            // Update email if provided and user has placeholder email
+            if (!empty($validated['email']) && (str_contains($user->email, 'customer_') || empty($user->email))) {
+                $user->update(['email' => $validated['email']]);
+            }
+        }
 
         $customer = Customer::firstOrCreate(
             ['user_id' => $user->id, 'garage_id' => $garageId],
             [
-                'address' => $validated['address'],
-                'gst_number' => $validated['gst_number'],
+                'address' => $validated['address'] ?? null,
+                'gst_number' => $validated['gst_number'] ?? null,
                 'whatsapp_number' => $validated['whatsapp_number'] ?? $validated['phone'],
             ]
         );
@@ -99,7 +119,53 @@ class CustomerController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', 'Customer added successfully.');
+        $inviteSent = false;
+        if ($isNewUser && !empty($validated['email']) && !str_contains($validated['email'], 'customer_')) {
+            try {
+                $garage = \App\Models\Garage::find($garageId);
+                \Illuminate\Support\Facades\Mail::to($validated['email'])->send(
+                    new \App\Mail\CustomerInvitationMail($user, $tempPassword, $garage)
+                );
+                $inviteSent = true;
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Failed to send customer invitation email: " . $e->getMessage());
+            }
+        }
+
+        \App\Services\ActionLogService::log(
+            action: 'create',
+            module: 'customers',
+            description: "Added customer '{$user->name}' ({$user->phone})",
+            garageId: $garageId,
+            details: [
+                'name' => $user->name,
+                'phone' => $user->phone,
+                'email' => $validated['email'] ?? null,
+                'invite_sent' => $inviteSent,
+                'is_new_user' => $isNewUser,
+            ]
+        );
+
+        $flashData = [
+            'success' => $isNewUser 
+                ? ($inviteSent 
+                    ? "Customer added successfully! Invitation email with temporary password has been sent to {$validated['email']}."
+                    : "Customer added successfully!")
+                : "Customer added to garage successfully.",
+        ];
+
+        if ($isNewUser && $tempPassword) {
+            $flashData['new_customer_credentials'] = [
+                'name' => $user->name,
+                'phone' => $user->phone,
+                'email' => !empty($validated['email']) ? $validated['email'] : null,
+                'whatsapp_number' => $validated['whatsapp_number'] ?? $validated['phone'],
+                'temporary_password' => $tempPassword,
+                'invite_sent' => $inviteSent,
+            ];
+        }
+
+        return redirect()->back()->with($flashData);
     }
 
     public function update(Request $request, Customer $customer)
@@ -114,17 +180,25 @@ class CustomerController extends Controller
         $userId = $customer->user_id;
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20|unique:users,phone,' . $userId,
+            'phone' => [
+                'required',
+                'string',
+                'regex:/^\+?[0-9]{7,15}$/',
+                'unique:users,phone,' . $userId,
+            ],
             'email' => 'nullable|email|max:255|unique:users,email,' . $userId,
             'address' => 'nullable|string',
             'gst_number' => 'nullable|string|max:50',
-            'whatsapp_number' => 'nullable|string|max:20',
+            'whatsapp_number' => ['nullable', 'string', 'regex:/^\+?[0-9]{7,15}$/'],
             
             'vehicles' => 'nullable|array',
             'vehicles.*.id' => 'nullable|exists:vehicles,id',
             'vehicles.*.registration_number' => 'required|string|max:20',
             'vehicles.*.brand_id' => 'required|exists:vehicle_brands,id',
             'vehicles.*.model_id' => 'required|exists:vehicle_models,id',
+        ], [
+            'phone.regex' => 'The phone number must contain 7 to 15 digits (digits and optional leading + only).',
+            'whatsapp_number.regex' => 'The WhatsApp number must contain 7 to 15 digits.',
         ]);
 
         $customer->user->update([
@@ -201,11 +275,47 @@ class CustomerController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $temporaryPassword = Str::random(10);
+        $temporaryPassword = 'PC#' . rand(100000, 999999);
         $customer->user->update([
-            'password' => bcrypt($temporaryPassword)
+            'password' => bcrypt($temporaryPassword),
+            'must_change_password' => true,
         ]);
 
-        return redirect()->back()->with('success', "Customer password reset successfully. Temporary password: {$temporaryPassword}");
+        $inviteSent = false;
+        $email = $customer->user->email;
+        if (!empty($email) && !str_contains($email, 'customer_')) {
+            try {
+                $garage = \App\Models\Garage::find($garageId);
+                \Illuminate\Support\Facades\Mail::to($email)->send(
+                    new \App\Mail\CustomerInvitationMail($customer->user, $temporaryPassword, $garage)
+                );
+                $inviteSent = true;
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Failed to send customer password reset email: " . $e->getMessage());
+            }
+        }
+
+        \App\Services\ActionLogService::log(
+            action: 'reset_password',
+            module: 'customers',
+            description: "Reset password for customer '{$customer->user->name}' ({$customer->user->phone})",
+            garageId: $garageId,
+            details: ['phone' => $customer->user->phone, 'invite_sent' => $inviteSent]
+        );
+
+        return redirect()->back()->with([
+            'success' => $inviteSent 
+                ? "Password reset successfully and email sent to {$email}."
+                : "Password reset successfully.",
+            'new_customer_credentials' => [
+                'name' => $customer->user->name,
+                'phone' => $customer->user->phone,
+                'email' => !str_contains($email, 'customer_') ? $email : null,
+                'whatsapp_number' => $customer->whatsapp_number ?? $customer->user->phone,
+                'temporary_password' => $temporaryPassword,
+                'invite_sent' => $inviteSent,
+                'is_reset' => true,
+            ]
+        ]);
     }
 }

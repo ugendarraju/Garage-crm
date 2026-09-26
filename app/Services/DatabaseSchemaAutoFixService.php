@@ -130,6 +130,17 @@ class DatabaseSchemaAutoFixService
             } catch (\Throwable $e) {
                 Log::warning('AutoFix: Failed to ensure action_logs table: ' . $e->getMessage());
             }
+
+            // 5. Ensure 'must_change_password' column in 'users' table
+            try {
+                if (Schema::hasTable('users') && !Schema::hasColumn('users', 'must_change_password')) {
+                    Schema::table('users', function ($table) {
+                        $table->boolean('must_change_password')->default(false);
+                    });
+                }
+            } catch (\Throwable $e) {
+                Log::warning('AutoFix: Failed to ensure users.must_change_password: ' . $e->getMessage());
+            }
         } catch (\Throwable $e) {
             Log::warning('DatabaseSchemaAutoFixService warning: ' . $e->getMessage());
         }
