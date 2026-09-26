@@ -15,6 +15,11 @@ class PartCategoryController extends Controller
         }
     }
 
+    public function index()
+    {
+        return redirect()->route('inventory.index');
+    }
+
     public function store(Request $request)
     {
         $this->authorizeStaff();
