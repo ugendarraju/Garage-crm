@@ -178,23 +178,27 @@ const summaryStats = computed(() => {
                     <h4 class="text-xs sm:text-sm font-bold text-gray-800 uppercase tracking-wider">{{ section.name }}</h4>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div
                         v-for="item in section.items"
                         :key="item"
-                        class="flex items-center justify-between p-2 rounded-lg bg-white border border-gray-200/80 shadow-xs hover:border-gray-300 transition-colors"
+                        class="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-white border border-gray-200 shadow-xs hover:border-gray-300 transition-all gap-2.5"
                     >
-                        <span class="text-xs font-medium text-gray-700 truncate pr-2" :title="item">{{ item }}</span>
+                        <div class="flex items-center gap-2 min-w-0 pr-1">
+                            <span class="text-xs sm:text-sm font-semibold text-gray-900 leading-snug break-words">
+                                {{ item }}
+                            </span>
+                        </div>
 
                         <!-- Interactive Pills -->
-                        <div v-if="!readonly" class="inline-flex rounded-md shadow-xs shrink-0" role="group">
+                        <div v-if="!readonly" class="inline-flex rounded-lg shadow-xs overflow-hidden border border-gray-200 shrink-0 w-full sm:w-auto" role="group">
                             <button
                                 v-for="opt in STATUS_OPTIONS"
                                 :key="opt.value"
                                 type="button"
                                 @click="setItemStatus(section.id, item, opt.value)"
                                 :class="[
-                                    'px-1.5 sm:px-2 py-0.5 text-[11px] font-bold border first:rounded-l-md last:rounded-r-md -ml-px transition-all',
+                                    'flex-1 sm:flex-initial px-2.5 py-1 text-xs font-bold transition-all text-center border-r last:border-r-0',
                                     getItemStatus(section.id, item) === opt.value
                                         ? opt.activeBg
                                         : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
@@ -205,28 +209,28 @@ const summaryStats = computed(() => {
                         </div>
 
                         <!-- Readonly Badge -->
-                        <div v-else class="shrink-0">
+                        <div v-else class="shrink-0 self-start sm:self-center">
                             <span
                                 v-if="getItemStatus(section.id, item) === 'ok'"
-                                class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800"
+                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-800"
                             >
                                 ✓ OK
                             </span>
                             <span
                                 v-else-if="getItemStatus(section.id, item) === 'attention'"
-                                class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800"
+                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800"
                             >
                                 ⚡ Attention
                             </span>
                             <span
                                 v-else-if="getItemStatus(section.id, item) === 'damaged'"
-                                class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800"
+                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-rose-100 text-rose-800"
                             >
                                 ✕ Damaged
                             </span>
                             <span
                                 v-else
-                                class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-500"
+                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500"
                             >
                                 N/A
                             </span>
